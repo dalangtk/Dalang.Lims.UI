@@ -1,0 +1,97 @@
+{
+  "name": "dalang.lims.ui",
+  "version": "1.0.0",
+  "description": "vue3 vite admin plus",
+  "author": "",
+  "license": "GPL-2.0-only",
+  "scripts": {
+    "dev": "vite --force",
+    "build": "vite build",
+    "lint-fix": "eslint --fix --ext .js --ext .jsx --ext .vue src/",
+    "format": "npx prettier --write .",
+    "install:pkg": "npm install --registry https://registry.npmmirror.com",
+    "gen:api": "node ./gen/gen-api"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.3.1",
+    "@tato30/vue-pdf": "^1.11.5",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
+    "ace-builds": "^1.33.2",
+    "axios": "^1.7.1",
+    "countup.js": "^2.8.0",
+    "cropperjs": "^1.6.2",
+    "dayjs": "^1.11.11",
+    "echarts": "^5.5.0",
+    "echarts-gl": "^2.0.9",
+    "echarts-wordcloud": "^2.1.0",
+    "element-plus": "^2.10.4",
+    "js-cookie": "^3.0.5",
+    "js-table2excel": "^1.1.2",
+    "jsplumb": "^2.15.6",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
+    "mitt": "^3.0.1",
+    "nprogress": "^0.2.0",
+    "pinia": "^2.1.7",
+    "print-js": "^1.6.0",
+    "qrcodejs2-fixes": "^0.0.2",
+    "qs": "^6.12.1",
+    "screenfull": "^6.0.2",
+    "sm-crypto-v2": "^1.9.0",
+    "sortablejs": "^1.15.2",
+    "splitpanes": "^3.1.5",
+    "vue": "^3.5.13",
+    "vue-clipboard3": "^2.0.0",
+    "vue-demi": "^0.14.7",
+    "vue-grid-layout": "^3.0.0-beta1",
+    "vue-i18n": "^9.13.1",
+    "vue-router": "^4.3.2",
+    "vue3-ace-editor": "^2.2.4",
+    "vxe-pc-ui": "^4.9.14",
+    "vxe-table": "^4.16.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/nprogress": "^0.2.3",
+    "@types/sortablejs": "^1.15.8",
+    "@typescript-eslint/eslint-plugin": "^7.6.0",
+    "@typescript-eslint/parser": "^7.6.0",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "@vue/compiler-sfc": "^3.4.27",
+    "dotenv": "16.4.5",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vue": "^9.26.0",
+    "prettier": "^3.2.5",
+    "sass": "^1.77.2",
+    "swagger-typescript-api": "13.0.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11",
+    "vite-plugin-compression": "0.5.1",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vite-plugin-vue-setup-extend-plus": "^0.1.0",
+    "vue-eslint-parser": "^9.4.2"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "bugs": {
+    "url": ""
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">= 7.0.0"
+  },
+  "keywords": [
+    "vue3",
+    "element-plus",
+    "vue-next-admin",
+    "admin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": ""
+  }
+}
