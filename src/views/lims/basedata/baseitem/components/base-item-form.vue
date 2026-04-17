@@ -18,12 +18,8 @@
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
-          <el-form-item
-            label="项目代码"
-            prop="baseItem.itemCode"
-            :rules="[{ required: true, message: '请输入项目代码', trigger: ['blur', 'change'] }]"
-          >
-            <el-input v-model="state.form.baseItem.itemCode" clearable :disabled="editItemIsDisable(false, true)" />
+          <el-form-item label="项目代码" prop="baseItem.itemCode">
+            <el-input v-model="state.form.baseItem.itemCode" clearable :disabled="true" />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="24" :md="12" :lg="8" :xl="8">
@@ -247,7 +243,7 @@ onMounted(async () => {
   new BaseGroupApi()
     .getAll()
     .then((res) => {
-      state.groupList = res!.data!
+      state.groupList = res!.data!.filter((item) => item.groupCode != '8888' && item.groupCode != '9999')
     })
     .catch((e) => {
       modal.msgError(e)

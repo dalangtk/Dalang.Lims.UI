@@ -1,7 +1,6 @@
 <template>
   <div class="tct-container">
-    <!-- <AuditToolBar :show-mutil-audit="true"></AuditToolBar> -->
-    <el-form :model="formData" class="result-form" label-position="left" label-width="140px" size="small">
+    <el-form :model="formData" class="result-form" label-position="left" label-width="150px" size="small">
       <el-row :gutter="10" class="h100">
         <!-- 左侧栏：标本情况与微生物选项 -->
         <el-col :span="10">
@@ -112,7 +111,6 @@
 <script lang="ts" setup>
 import { reactive, ref } from 'vue'
 import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
-import AuditToolBar from '../../components/audittoolbar.vue'
 
 const props = withDefaults(
   defineProps<{

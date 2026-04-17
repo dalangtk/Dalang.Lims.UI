@@ -45,83 +45,18 @@
     <div class="lis-body">
       <!-- 1. 左侧：患者信息 -->
       <aside class="panel-left" :style="{ width: leftWidth + 'px' }">
-        <el-card shadow="never" class="info-card">
-          <template #header>
-            <div class="panel-header">
-              <span
-                ><el-icon><User /></el-icon> 患者信息</span
-              >
-              <el-tag :color="GetStatusColor(SampleStatusUtils.getSampleStatus(currentSample?.sampleStatus))">{{
-                currentSample?.sampleStatusName
-              }}</el-tag>
-              <el-button
-                type="primary"
-                link
-                @click="openEditDialog"
-                :disabled="
-                  !currentSample ||
-                  (currentSample.sampleStatus != SampleStatus.Testing.toString() && currentSample.sampleStatus != SampleStatus.ReportDelay.toString())
-                "
-              >
-                <el-icon><Edit /></el-icon>
-              </el-button>
-            </div>
-          </template>
-
-          <div v-if="currentSample" class="info-content">
-            <el-descriptions :column="1" border size="small" label-width="100">
-              <el-descriptions-item label="检测日期">
-                <span>{{ formatDate(currentSample.testDate, 'YYYY-mm-dd') }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="样本号">
-                <span>{{ currentSample.sampleNo }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="条码">
-                <span class="barcode-text">{{ currentSample.barcode }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="姓名">
-                <span>{{ currentSample.patientName }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="性别">
-                <span>{{ currentSample.genderName }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="年龄">
-                <span>{{ currentSample.ageDesc }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="目的">
-                <span>{{ currentSample.purNames }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="标本类型">
-                <span>{{ currentSample.sampleTypeName }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="标本性状">
-                <span>{{ currentSample.samplePropertyName }}</span>
-              </el-descriptions-item>
-              <el-descriptions-item label="科室">{{ currentSample.department }}</el-descriptions-item>
-              <el-descriptions-item label="医生">{{ currentSample.doctor }}</el-descriptions-item>
-              <el-descriptions-item label="床号">{{ currentSample.bedNo }}</el-descriptions-item>
-              <el-descriptions-item label="病员号">{{ currentSample.patientId }}</el-descriptions-item>
-              <el-descriptions-item label="客户条码">{{ currentSample.customerBarcode }}</el-descriptions-item>
-              <el-descriptions-item label="采样时间">{{ formatDatetime(currentSample.collectTime) }}</el-descriptions-item>
-              <el-descriptions-item label="接收时间">{{ formatDatetime(currentSample.receiveTime) }}</el-descriptions-item>
-              <el-descriptions-item label="检测时间">{{ formatDatetime(currentSample.inTestTime) }}</el-descriptions-item>
-              <el-descriptions-item label="临床诊断">
-                <div class="text-wrap">{{ currentSample.clinicalDiagnosis }}</div>
-              </el-descriptions-item>
-              <el-descriptions-item label="结果说明">{{ currentSample.resultDescription }}</el-descriptions-item>
-              <el-descriptions-item label="建议解释">{{ currentSample.suggestion }}</el-descriptions-item>
-              <el-descriptions-item label="备注">{{ currentSample.remarks }}</el-descriptions-item>
-              <el-descriptions-item label="初审人">{{ currentSample.firstAuditName }}</el-descriptions-item>
-              <el-descriptions-item label="初审时间">{{ formatDatetime(currentSample.firstAuditTime) }}</el-descriptions-item>
-              <el-descriptions-item label="复审人">{{ currentSample.secondAuditName }}</el-descriptions-item>
-              <el-descriptions-item label="复审时间">{{ formatDatetime(currentSample.secondAuditTime) }}</el-descriptions-item>
-              <el-descriptions-item label="Id">{{ currentSample.id }}</el-descriptions-item>
-            </el-descriptions>
-          </div>
-          <div v-else class="empty-state">
-            <el-empty description="请选择标本" :image-size="60" />
-          </div>
-        </el-card>
+        <PatientInfo
+          :current-sample="currentSample"
+          :gender-list="state.genderList"
+          :age-unit-list="state.ageUnitList"
+          :sample-type-list="state.sampleTypeList"
+          :sample-property-list="state.samplePropertyList"
+          :active-id="activeId"
+          :all-samples="state.allSamples"
+          @update:current-sample="(value) => currentSample = value"
+          @update:all-samples="(value) => state.allSamples = value"
+          @refresh-filter="handleFilter"
+        />
       </aside>
 
       <!-- Resizer Left -->
@@ -206,264 +141,21 @@
 
       <!-- 3. 右侧：列表 + 综合筛选 -->
       <aside class="panel-right" :style="{ width: rightWidth + 'px' }">
-        <el-card shadow="never" class="list-card">
-          <template #header>
-            <div class="list-header-wrapper">
-              <!-- 日期 -->
-              <el-date-picker
-                v-model="state.queryDateRange"
-                type="daterange"
-                range-separator="-"
-                start-placeholder="开始"
-                end-placeholder="结束"
-                size="small"
-                value-format="YYYY-MM-DD"
-                style="width: 100%; margin-bottom: 6px"
-              />
-              <!-- 状态筛选 -->
-              <el-select
-                v-model="state.statusFilter"
-                multiple
-                collapse-tags
-                collapse-tags-tooltip
-                clearable
-                placeholder="状态 (全部)"
-                size="small"
-                style="width: 100%; margin-bottom: 6px"
-                @change="handleFilter"
-              >
-                <el-option v-for="s in state.allSampleStatus" :key="s.code" :label="s.name" :value="s.code">{{ s.name }}</el-option>
-                <!-- <el-option label="待检" value="待检"> <span class="dot danger">●</span> 待检 </el-option>
-                <el-option label="检测中" value="检测中"> <span class="dot warning">●</span> 检测中 </el-option>
-                <el-option label="已审" value="已审"> <span class="dot success">●</span> 已审 </el-option> -->
-              </el-select>
-              <!-- 搜索 -->
-              <div style="display: flex">
-                <el-input v-model="state.searchText" placeholder="筛选" prefix-icon="Search" size="small" clearable @input="handleFilter" />
-                <el-button @click="querySampleList" type="primary">查询</el-button>
-              </div>
-            </div>
-          </template>
-
-          <div class="virtual-list-container">
-            <vxe-table
-              style="height: 100%"
-              max-height="100%"
-              min-height="100%"
-              border="full"
-              ref="sampleListTableRef"
-              :data="state.filteredList"
-              :row-config="{ isCurrent: true, isHover: true }"
-              :aggregate-config="aggregateConfig"
-              :virtual-y-config="{ enabled: true, gt: 0 }"
-              @current-row-change="({ row }) => switchSample(row)"
-            >
-              <!-- <vxe-column field="sampleNo" title="sampleNo" row-group-node>
-                <template #default="{ row, column }">
-                  <div v-if="row.id >= 0" class="virtual-item-card" :class="{ 'is-active': activeId === row.id }" @click="switchSample(row)">
-                    <div class="item-top">
-                      <span class="item-name">{{ row.sampleNo }}</span>
-                      <span class="item-name">{{ row.patientName }}</span>
-                      <el-tag size="small" :color="GetStatusColor(SampleStatusUtils.getSampleStatus(row?.sampleStatus))" effect="plain">{{
-                        row.sampleStatusName
-                      }}</el-tag>
-                    </div>
-                    <div class="item-mid">
-                      <span class="text-ellipsis">{{ row.purNames }}</span>
-                    </div>
-                    <div class="item-bottom">
-                      <span class="item-barcode">{{ row.barcode }}</span>
-                      <span>{{ formatDate(row.testDate, 'YYYY-mm-dd') }}</span>
-                    </div>
-                  </div>
-                  <div v-else>
-                    <span>{{ formatDate(row.testDate, 'YYYY-mm-dd') }}</span>
-                  </div>
-                </template>
-              </vxe-column> -->
-              <vxe-column field="sampleNo" title="样本号" width="150" row-group-node>
-                <template #default="{ row }">
-                  <el-badge :is-dot="row.hasCritical" class="item">
-                    <el-tag size="large" :color="GetStatusColor(SampleStatusUtils.getSampleStatus(row?.sampleStatus))" effect="plain">{{
-                      row.sampleNo
-                    }}</el-tag>
-                  </el-badge>
-                </template>
-              </vxe-column>
-              <vxe-column field="barcode" title="条码" width="120"></vxe-column>
-              <vxe-column field="patientName" title="姓名" width="auto"></vxe-column>
-              <vxe-column field="purCodes" title="目的代码" width="150"></vxe-column>
-              <vxe-column field="purNames" title="目的名称" width="150"></vxe-column>
-            </vxe-table>
-            <!-- <el-auto-resizer>
-              <template #default="{ height, width }">
-                <el-table-v2
-                  :columns="[{ key: 'testDate', dataKey: 'id', title: 'List', width: width, align: 'center' }]"
-                  :data="state.filteredList"
-                  :width="width"
-                  :height="height"
-                  ref="sampleListTable"
-                  row-key="id"
-                  expand-column-key="testDate"
-                  :default-expanded-keys="state.defaultExpandedKeys"
-                  :row-height="84"
-                  :header-height="20"
-                  fixed
-                >
-                  <template #cell="{ rowData }">
-                    <div
-                      v-if="rowData.id >= 0"
-                      class="virtual-item-card"
-                      :class="{ 'is-active': activeId === rowData.id }"
-                      @click="switchSample(rowData)"
-                    >
-                      <div class="item-top">
-                        <span class="item-name">{{ rowData.sampleNo }}</span>
-                        <span class="item-name">{{ rowData.patientName }}</span>
-                        <el-tag size="small" :color="GetStatusColor(SampleStatusUtils.getSampleStatus(rowData?.sampleStatus))" effect="plain">{{
-                          rowData.sampleStatusName
-                        }}</el-tag>
-                      </div>
-                      <div class="item-mid">
-                        <span class="text-ellipsis">{{ rowData.purNames }}</span>
-                      </div>
-                      <div class="item-bottom">
-                        <span class="item-barcode">{{ rowData.barcode }}</span>
-                        <span>{{ rowData.inTestTime }}</span>
-                      </div>
-                    </div>
-                    <div v-else>
-                      <span>{{ formatDate(rowData.testDate, 'YYYY-mm-dd') }}</span>
-                    </div>
-                  </template>
-                </el-table-v2>
-              </template>
-            </el-auto-resizer> -->
-          </div>
-          <div class="list-footer">共 {{ state.allSamples.length }} 条</div>
-        </el-card>
+        <SampleList
+          :group-code="state.groupCode"
+          :all-sample-status="state.allSampleStatus"
+          :all-samples="state.allSamples"
+          :filtered-list="state.filteredList"
+          :active-id="activeId"
+          v-model:query-date-range="state.queryDateRange"
+          @update:all-samples="(value) => state.allSamples = value"
+          @update:filtered-list="(value) => state.filteredList = value"
+          @update:active-id="(value) => activeId = value"
+          @switch-sample="switchSample"
+          @query-sample-list="querySampleList"
+        />
       </aside>
     </div>
-
-    <!-- 编辑弹窗 -->
-    <el-dialog v-model="editDialogVisible" title="修改患者信息" width="30%">
-      <el-form :model="editForm" label-width="70px">
-        <el-form-item label="姓名">
-          <el-input v-model="editForm.patientName" :class="{ 'is-modified': isModified('patientName') }">
-            <!-- 如果修改了，显示一个小红点或者提示 -->
-            <template #suffix v-if="isModified('patientName')">
-              <el-tooltip content="该字段已修改" placement="top">
-                <el-icon color="#E6A23C"><EditPen /></el-icon>
-              </el-tooltip>
-            </template>
-          </el-input>
-          <!-- 显示原值提示 -->
-          <!-- <div v-if="isModified('name')" class="original-value-tip">原值: {{ originalSnapshot.name }}</div> -->
-        </el-form-item>
-
-        <el-form-item label="性别">
-          <el-radio-group v-model="editForm.genderCode" :class="{ 'is-modified-border': isModified('genderCode') }">
-            <el-radio v-for="gender in state.genderList" :key="gender.code" :label="gender.name" :value="gender.code">{{ gender.name }}</el-radio>
-          </el-radio-group>
-        </el-form-item>
-
-        <el-form-item label="年龄">
-          <div style="display: flex">
-            <el-input v-model="editForm.age1" :class="{ 'is-modified': isModified('age1') }"></el-input>
-            <el-select
-              v-model="editForm.ageUnit1"
-              placeholder="单位"
-              style="width: 120px; margin-left: 6px"
-              :class="{ 'is-modified-border': isModified('ageUnit1') }"
-            >
-              <el-option v-for="unit in state.ageUnitList" :key="unit.code" :label="unit.name" :value="unit.code"></el-option>
-            </el-select>
-          </div>
-        </el-form-item>
-        <el-form-item label="年龄2">
-          <div style="display: flex">
-            <el-input v-model="editForm.age2" :class="{ 'is-modified': isModified('age2') }"></el-input>
-            <el-select
-              v-model="editForm.ageUnit2"
-              placeholder="单位2"
-              style="width: 120px; margin-left: 6px"
-              :class="{ 'is-modified-border': isModified('ageUnit2') }"
-            >
-              <el-option v-for="unit in state.ageUnitList" :key="unit.code" :label="unit.name" :value="unit.code"></el-option>
-            </el-select>
-          </div>
-        </el-form-item>
-
-        <el-form-item label="标本类型">
-          <el-select v-model="editForm.sampleTypeCode" placeholder="标本类型" :class="{ 'is-modified-border': isModified('sampleTypeCode') }">
-            <el-option v-for="t in state.sampleTypeList" :key="t.sampleTypeCode" :label="t.sampleTypeName" :value="t.sampleTypeCode"></el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="标本性状">
-          <el-select v-model="editForm.samplePropertyCode" placeholder="标本性状" :class="{ 'is-modified-border': isModified('samplePropertyCode') }">
-            <el-option v-for="t in state.samplePropertyList" :key="t.code" :label="t.name" :value="t.code"></el-option>
-          </el-select>
-        </el-form-item>
-
-        <el-form-item label="科室">
-          <el-input v-model="editForm.department" :class="{ 'is-modified': isModified('department') }"> </el-input>
-        </el-form-item>
-        <el-form-item label="医生">
-          <el-input v-model="editForm.doctor" :class="{ 'is-modified': isModified('doctor') }"> </el-input>
-        </el-form-item>
-        <el-form-item label="床号">
-          <el-input v-model="editForm.bedNo" :class="{ 'is-modified': isModified('bedNo') }"> </el-input>
-        </el-form-item>
-        <el-form-item label="病员号">
-          <el-input v-model="editForm.patientId" :class="{ 'is-modified': isModified('patientId') }"> </el-input>
-        </el-form-item>
-        <el-form-item label="客户条码">
-          <el-input v-model="editForm.customerBarcode" :class="{ 'is-modified': isModified('customerBarcode') }"> </el-input>
-        </el-form-item>
-
-        <el-form-item label="采样时间">
-          <div :class="{ 'is-modified-border': isModified('collectTime') }">
-            <el-date-picker
-              v-model="editForm.collectTime"
-              type="datetime"
-              placeholder="Pick a Date"
-              format="YYYY-MM-DD HH:mm:ss"
-              :class="{ 'is-modified-border': isModified('collectTime') }"
-            />
-          </div>
-        </el-form-item>
-        <el-form-item label="接收时间">
-          <div :class="{ 'is-modified-border': isModified('collectTime') }">
-            <el-date-picker
-              v-model="editForm.receiveTime"
-              type="datetime"
-              placeholder="Pick a Date"
-              format="YYYY-MM-DD HH:mm:ss"
-              :class="{ 'is-modified-border': isModified('receiveTime') }"
-            />
-          </div>
-        </el-form-item>
-
-        <el-form-item label="诊断">
-          <el-input v-model="editForm.clinicalDiagnosis" type="textarea" :rows="2" :class="{ 'is-modified': isModified('clinicalDiagnosis') }" />
-        </el-form-item>
-        <el-form-item label="结果说明">
-          <el-input v-model="editForm.resultDescription" type="textarea" :rows="2" :class="{ 'is-modified': isModified('resultDescription') }" />
-        </el-form-item>
-        <el-form-item label="建议解释">
-          <el-input v-model="editForm.suggestion" type="textarea" :rows="2" :class="{ 'is-modified': isModified('suggestion') }" />
-        </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="editForm.remark" type="textarea" :rows="2" :class="{ 'is-modified': isModified('remark') }" />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="editDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="savePatientInfo">保存修改</el-button>
-      </template>
-    </el-dialog>
 
     <PurposeSelect :group-code="state.groupCode" ref="purposeSelectRef" @confirm="confirmSelectItem"></PurposeSelect>
 
@@ -490,15 +182,16 @@
 </template>
 
 <script lang="ts" setup name="/exam/sampletest">
-import { Edit, EditPen, Operation, User } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { Operation } from '@element-plus/icons-vue'
 import 'element-plus/theme-chalk/el-table-v2.css'
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
-import { VxeGridInstance, VxeTablePropTypes } from 'vxe-table'
+import { VxeTablePropTypes } from 'vxe-table'
 import HistoryResult from './components/historyresult.vue'
+import PatientInfo from './components/PatientInfo.vue'
 import RptPreview from './components/reportpreview.vue'
+import SampleList from './components/samplelist.vue'
 import tracktab from './components/tracktab.vue'
 import { DictGetListDto } from '/@/api/admin/data-contracts'
 import { DictApi } from '/@/api/admin/Dict'
@@ -513,18 +206,16 @@ import {
   AuditInput,
   CancelTestInput,
   UnAuditInput,
-  UpdatePatientInfoInput,
 } from '/@/api/lims/exam/datacontract/sampletest-datacontract'
 import { SampleTestApi } from '/@/api/lims/exam/sampletest'
 import { ExamInfoOutput, ExamListQueryInput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 import { ExamResultOutput } from '/@/api/lims/shared/datacontract/examresult-datacontract'
 import { ExecuteTypeEnum, OperationTypeEnum } from '/@/api/lims/shared/enums/operationtypeenum'
-import { GetStatusColor, SampleStatus, SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
+import { SampleStatus, SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
 import MySelectTable from '/@/components/my-select-table/index.vue'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { formatDate, formatDatetime, parseDate, subtractDays } from '/@/utils/formatTime'
-import DateTimeComparator from '/@/utils/timeCompare'
 import PurposeSelect from '/@/views/lims/basedata/basepurpose/components/purpose-select.vue'
 const route = useRoute()
 const examId = history.state.examId
@@ -535,11 +226,9 @@ interface ExamListTreeData extends ExamInfoOutput {
   parent: ''
   children: ExamInfoOutput[]
 }
-const sampleListTable = ref()
 const moreTab = ref()
 const purposeSelectRef = ref()
 const delItemSelectRef = ref()
-const sampleListTableRef = ref<VxeGridInstance<ExamInfoOutput>>()
 const previewRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
@@ -550,24 +239,6 @@ const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutpu
     return `${formatDatetime(parseDate(groupValue), 'YY/MM/DD')}`
   },
 })
-const cellStyle: VxeTablePropTypes.CellStyle<ExamInfoOutput> = ({ row, column }) => {
-  if (column.field === 'sampleNo') {
-    let color = GetStatusColor(SampleStatusUtils.getSampleStatus(row?.sampleStatus))
-    console.log('cellClassName', color)
-    return { backgroundColor: color }
-  }
-  return null
-}
-const spanMethod: VxeTablePropTypes.SpanMethod<ExamInfoOutput> = ({ row, column }) => {
-  const $table = sampleListTableRef.value
-  if ($table && $table.isAggregateRecord(row)) {
-    if (column.field === 'sampleNo') {
-      return { rowspan: 1, colspan: 5 }
-    }
-    return { rowspan: 0, colspan: 0 }
-  }
-  return { rowspan: 1, colspan: 1 }
-}
 
 const state = reactive({
   totalCount: 0,
@@ -577,10 +248,6 @@ const state = reactive({
   filteredList: [] as ExamInfoOutput[],
   resultList: [] as ExamResultOutput[],
   allSampleStatus: [] as Array<{ code: number; name: string }>,
-  statusFilter: [] as any[],
-  queryDateRange: [] as any,
-  defaultExpandedKeys: [-1, -2, -3],
-  searchText: '',
   genderList: [] as DictGetListDto[] | null,
   ageUnitList: [] as DictGetListDto[] | null,
   sampleTypeList: [] as BaseSampleTypeOutput[],
@@ -590,6 +257,7 @@ const state = reactive({
   delItemDialogShow: false,
   delItemDataList: [] as BasePurposeOutput[],
   historyResultShow: false,
+  queryDateRange: [] as any,
 })
 const activeId = ref(-1)
 
@@ -626,31 +294,9 @@ onMounted(async () => {
 //#region 筛选逻辑
 
 const handleFilter = () => {
-  let res = state.allSamples
-  // 状态筛选
-  if (state.statusFilter && state.statusFilter.length > 0) {
-    res = res.filter((item) => state.statusFilter.includes(item.sampleStatus))
-  }
-  // 文本筛选
-  if (state.searchText) {
-    const lower = state.searchText.toLowerCase()
-    res = res.filter((item) => item.barcode?.toLowerCase().includes(lower) == true || item.patientName?.toLowerCase()?.includes(lower) == true)
-  }
-  state.filteredList = res
-  console.log(state.filteredList)
-  const $table = sampleListTableRef.value
-  if (res && res.length > 0) {
-    if (res.findIndex((v) => v.id == activeId.value) < 0) {
-      switchSample(res[0])
-      $table!.setCurrentRow(res[0])
-    }
-  }
-  nextTick(() => {
-    $table!.setAllRowGroupExpand(true)
-  })
+  // 筛选逻辑已移至 SampleList 组件
 }
 
-watch([state.statusFilter], handleFilter) //searchText
 //#endregion 1. 筛选逻辑
 
 //#region 拖拽布局
@@ -730,12 +376,6 @@ const querySampleList = (examId?: number) => {
         state.filteredList = filterData
         console.log('state.filteredList', state.filteredList)
         switchSample(state.allSamples[0])
-
-        const $table = sampleListTableRef.value
-        $table!.setCurrentRow(state.allSamples[0])
-        nextTick(() => {
-          $table!.setAllRowGroupExpand(true)
-        })
       }
     } else {
       console.log('no data')
@@ -792,22 +432,19 @@ watch(activeId, (newValue) => {
 })
 
 const switchSample = (row: ExamInfoOutput) => {
-  const $table = sampleListTableRef.value
-  if ($table && !$table.isAggregateRecord(row)) {
-    activeId.value = row.id
-    console.log('activeId', activeId.value)
-    if (activeId.value > 0) {
-      new SampleTestApi().getResultList({ examInfoId: row.id }, { showErrorMessage: true }).then((res) => {
-        if (res.data) {
-          res.data.forEach((item) => {
-            item.isEditing = false
-            item.originalItemResult = item.itemResult
-          })
-        }
-        state.resultList = res.data!
-        console.log(state.resultList)
-      })
-    }
+  activeId.value = row.id
+  console.log('activeId', activeId.value)
+  if (activeId.value > 0) {
+    new SampleTestApi().getResultList({ examInfoId: row.id }, { showErrorMessage: true }).then((res) => {
+      if (res.data) {
+        res.data.forEach((item) => {
+          item.isEditing = false
+          item.originalItemResult = item.itemResult
+        })
+      }
+      state.resultList = res.data!
+      console.log(state.resultList)
+    })
   }
 }
 /**
@@ -1067,95 +704,7 @@ const saveResult = (row: ExamResultOutput) => {
 //#endregion 检验结果编辑
 
 //#region 基础信息编辑
-const editDialogVisible = ref(false)
-const editForm = reactive({} as any)
-let originalSnapshot = {} as any // 不需要响应式，普通对象即可
-
-const openEditDialog = () => {
-  if (!currentSample.value) return
-  if (
-    currentSample.value?.sampleStatus != SampleStatus.Testing.toString() &&
-    currentSample.value?.sampleStatus != SampleStatus.ReportDelay.toString()
-  )
-    return
-
-  // 1. 深拷贝或浅拷贝创建快照
-  // 这里的 patient 是扁平结构，浅拷贝 { ...obj } 足够
-  originalSnapshot = { ...currentSample.value }
-
-  // 2. 赋值给表单
-  Object.keys(editForm).forEach((k: any) => delete editForm[k]) // 清理旧key
-  Object.assign(editForm, originalSnapshot)
-
-  editDialogVisible.value = true
-}
-
-// 辅助：判断是否修改
-const isModified = (key: string) => {
-  let editVal = editForm[key]
-  let oriVal = originalSnapshot[key]
-  if (editVal instanceof Date || oriVal instanceof Date) {
-    var result = DateTimeComparator.compare(editVal, oriVal, { useUTC: true })
-    return !result
-  } else {
-    return editForm[key] !== originalSnapshot[key]
-  }
-}
-
-const savePatientInfo = () => {
-  const target = state.allSamples.find((i) => i.id === activeId.value)
-  if (!target) return
-
-  // 1. 计算差异
-  const changes = {} as any
-  Object.keys(editForm).forEach((key) => {
-    if (editForm[key] !== originalSnapshot[key]) {
-      changes[key] = editForm[key]
-    }
-  })
-
-  // 2. 判断是否有修改
-  const changedKeys = Object.keys(changes)
-  if (changedKeys.length === 0) {
-    ElMessage.info('数据未发生变化')
-    editDialogVisible.value = false
-    return
-  }
-
-  let param = {
-    examInfo: { id: target.id, ...changes },
-    updateFields: changedKeys,
-  } as UpdatePatientInfoInput
-
-  console.log('param', param)
-
-  new SampleTestApi().updatePatientInfo(param).then((res) => {
-    if (res.success) {
-      modal.msgSuccess('保存成功')
-      Object.assign(target, changes)
-      state.allSamples = [...state.allSamples] // 触发视图更新
-      handleFilter() // 刷新列表显示的姓名等
-
-      ElMessage.success(`已更新字段: ${changedKeys.join(', ')}`)
-      editDialogVisible.value = false
-    }
-  })
-  // 3. (模拟) 发送请求
-  // API.patch(`/patient/${target.patient.id}`, changes)
-  // console.log('提交到后端的 Payload:', {
-  //   sampleId: target.id,
-  //   patientId: target.id,
-  //   ...changes, // 只包含 { name: '新名字' } 这种
-  // })
-
-  // 4. 更新前端本地数据
-  // Object.assign(target, changes)
-  // state.allSamples = [...state.allSamples] // 触发视图更新
-  // handleFilter() // 刷新列表显示的姓名等
-
-  // ElMessage.success(`已更新字段: ${changedKeys.join(', ')}`)
-  // editDialogVisible.value = false
-}
+// 基础信息编辑逻辑已移至 PatientInfo 组件
 //#endregion 基础信息编辑
 
 // 样式辅助

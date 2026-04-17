@@ -18,7 +18,7 @@
       </el-table-column>
     </MyTable>
 
-    <BasePurposeTransfer ref="purposeTransferRef" :on-confirm="confirmSelectPurpose" />
+    <BasePurposeTransfer ref="purposeTransferRef" :on-confirm="confirmSelectPurpose" :contains-pathology="true" />
   </div>
 </template>
 

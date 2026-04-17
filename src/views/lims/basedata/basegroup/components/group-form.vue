@@ -13,7 +13,7 @@
         <el-row :gutter="35">
           <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
             <el-form-item label="组别代码" prop="groupCode" :rules="[{ required: true, message: '请输入组别代码', trigger: ['blur', 'change'] }]">
-              <el-input v-model="form.groupCode" clearable />
+              <el-input v-model="form.groupCode" clearable :disabled="form.id > 0" />
             </el-form-item>
           </el-col>
           <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">

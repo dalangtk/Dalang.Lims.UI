@@ -43,8 +43,8 @@
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
-                  <el-form-item label="目的代码" prop="purCode" v-show="editItemIsShow(true, true)">
-                    <el-input v-model="state.purposeModel.purpose.purCode" placeholder="目的代码"> </el-input>
+                  <el-form-item label="目的代码" prop="purCode">
+                    <el-input v-model="state.purposeModel.purpose.purCode" placeholder="目的代码" :disabled="true"> </el-input>
                   </el-form-item>
                 </el-col>
                 <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
@@ -97,7 +97,7 @@
                     <el-switch v-model="state.purposeModel.purposeTenantSetting.isInputHide" />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="工作流" prop="workFlowType" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">工作流</span>
@@ -105,7 +105,7 @@
                     <el-input v-model="state.purposeModel.purposeTenantSetting.workFlowType" placeholder="工作流" />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="检测计划" prop="examPlan" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">检测计划</span>
@@ -122,7 +122,7 @@
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="检测班次" prop="testShift" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">检测班次</span>
@@ -132,7 +132,7 @@
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="检测性别" prop="testSex" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">检测性别</span>
@@ -142,7 +142,7 @@
                     </el-select>
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="存储条件" prop="storageCondition" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">存储条件</span>
@@ -150,7 +150,7 @@
                     <el-input v-model="state.purposeModel.purposeTenantSetting.storageCondition" placeholder="存储条件" />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12">
+                <el-col :xs="24" :sm="12" :md="12" :lg="12" :xl="12" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
                   <el-form-item label="存储周期" prop="storageCycle" v-show="editItemIsShow(true, true)">
                     <template #label>
                       <span class="label-tenantsetting-color">存储周期</span>
@@ -182,7 +182,7 @@
             ></BasePurposePersonalize>
           </div>
         </div>
-        <div class="pdetail">
+        <div class="pdetail" v-if="props.purposeTypeEnum != PurposeTypeEnum.Pathology">
           <PurposeDetail @BeginWatchPurDetail="watchpurposedetail" ref="purposeDetailRef" v-model="state.purposeModel" />
         </div>
       </div>
@@ -225,6 +225,7 @@ import { DictApi } from '/@/api/admin/Dict'
 import { BaseExamPlanListOutput, BaseExamPlanOutput, BaseExamPlanQueryListInput } from '/@/api/lims/basedata/datacontract/examplan-datacontract'
 import { BaseExamPlanApi } from '/@/api/lims/basedata/baseexamplan'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
+import { PurposeTypeEnum } from '/@/api/lims/shared/enums/purposetypeenum'
 const basePurposePersonalizeRef = ref()
 //用来监听目的是否改变，没改变不提交保存
 //let purposeWatch: any = null
@@ -234,10 +235,14 @@ let purposePersonalWatch: any = null
 let purposeDetailChanged = false
 let purposePersonalChanged = false
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: '',
+  },
+  purposeTypeEnum: {
+    type: Number,
+    default: PurposeTypeEnum.Routine,
   },
 })
 const formRef = ref()
@@ -328,7 +333,7 @@ const open = async (row: any = {}) => {
   }
   state.showDialog = true
   nextTick(() => {
-    if (isRefresh) {
+    if (isRefresh && props.purposeTypeEnum != PurposeTypeEnum.Pathology) {
       purposeDetailRef?.value?.refreshDetailItem()
       basePurposePersonalizeRef.value.refreshBasePurposePersonalize()
     }
@@ -376,8 +381,8 @@ const onNameChange = (val: string) => {
 
 const defaultToAddPurpose = (): BasePurposeAddInput => {
   return {
-    groupCode: '',
-    groupName: '',
+    groupCode: props.purposeTypeEnum == PurposeTypeEnum.Pathology ? '9999' : '',
+    groupName: props.purposeTypeEnum == PurposeTypeEnum.Pathology ? '病理' : '',
     purCode: '',
     purName: '',
     purNameAB: null,
@@ -387,6 +392,7 @@ const defaultToAddPurpose = (): BasePurposeAddInput => {
     sampleTypeName: null,
     clinicalSence: null,
     suggestions: null,
+    purposeType: props.purposeTypeEnum || null,
     remark: null,
     sort: 0,
     isValid: true,
@@ -502,7 +508,7 @@ defineExpose({
   display: flex;
   height: calc(100% - 10px);
   .purposeform {
-    width: 50%;
+    width: v-bind("props.purposeTypeEnum != PurposeTypeEnum.Pathology ? '50%' : '100%'");
     display: flex;
     flex-direction: column;
     .purheader {

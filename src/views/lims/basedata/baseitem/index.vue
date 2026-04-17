@@ -110,12 +110,14 @@ onMounted(async () => {
   new BaseGroupApi()
     .getAll()
     .then((res) => {
-      state.search[0].options = res!.data!.map((item) => {
-        return {
-          label: item.groupName,
-          value: item.groupCode,
-        }
-      })
+      state.search[0].options = res!
+        .data!.filter((item) => item.groupCode != '8888' && item.groupCode != '9999')
+        .map((item) => {
+          return {
+            label: item.groupName,
+            value: item.groupCode,
+          }
+        })
     })
     .catch((e) => {
       modal.msgError(e)

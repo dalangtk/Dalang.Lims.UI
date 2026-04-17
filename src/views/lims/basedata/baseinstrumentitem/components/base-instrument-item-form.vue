@@ -41,7 +41,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="项目代码" prop="instrumentItemCode" v-show="editItemIsShow(true, true)">
-                <el-input v-model="state.form.instrumentItemCode" placeholder="项目代码"> </el-input>
+                <el-input v-model="state.form.instrumentItemCode" placeholder="项目代码" :disabled="true"> </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">

@@ -1,3 +1,4 @@
+import { PurposeTypeEnum } from '../../shared/enums/purposetypeenum'
 import { BaseInstrumentItemOutput } from './instrumentitem-datacontract'
 
 /**
@@ -6,6 +7,7 @@ import { BaseInstrumentItemOutput } from './instrumentitem-datacontract'
 export interface BasePurposeQueryListInput {
   groupCode?: string
   purCode?: string
+  containsPathology?: boolean
 }
 /**
  * 新增检验目的入参
@@ -22,6 +24,7 @@ export interface BasePurposeAddInput {
   sampleTypeName?: string | null
   clinicalSence?: string | null
   suggestions?: string | null
+  purposeType?: PurposeTypeEnum | null
   remark?: string | null
   sort?: number
   isValid?: boolean

@@ -52,6 +52,10 @@ const props = defineProps({
     required: true,
     parameters: Array<BasePurposeOutput>,
   },
+  containsPathology: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const state = reactive({
@@ -77,6 +81,7 @@ const handleSearch = () => {
       pageSize: 10,
       filter: {
         purCode: state.search.purCode,
+        containsPathology: props.containsPathology,
       },
     })
     .then((res) => {

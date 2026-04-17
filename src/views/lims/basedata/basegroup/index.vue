@@ -117,6 +117,10 @@ const onEdit = (row: BaseGroupOutput) => {
 }
 
 const onDelete = (row: BaseGroupOutput) => {
+  if (row.groupCode == '8888' || row.groupCode == '9999') {
+    modal.msgError('默认组别项目不能删除')
+    return
+  }
   modal
     .confirmDelete(`确定要删除【${row.groupName}】?`, undefined)
     .then(async () => {
