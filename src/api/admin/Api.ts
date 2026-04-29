@@ -132,7 +132,7 @@ export class ApiApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    *
    * @tags api
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/api/delete
    * @secure
    */
@@ -148,65 +148,6 @@ export class ApiApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
       method: 'DELETE',
       query: query,
       secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags api
-   * @name BatchDelete
-   * @summary 批量彻底删除
-   * @request PUT:/api/admin/api/batch-delete
-   * @secure
-   */
-  batchDelete = (data: number[], params: RequestParams = {}) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/api/batch-delete`,
-      method: 'PUT',
-      body: data,
-      secure: true,
-      type: ContentType.Json,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags api
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/api/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/api/soft-delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags api
-   * @name BatchSoftDelete
-   * @summary 批量删除
-   * @request PUT:/api/admin/api/batch-soft-delete
-   * @secure
-   */
-  batchSoftDelete = (data: number[], params: RequestParams = {}) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/api/batch-soft-delete`,
-      method: 'PUT',
-      body: data,
-      secure: true,
-      type: ContentType.Json,
       ...params,
     })
   /**

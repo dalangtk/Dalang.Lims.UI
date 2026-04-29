@@ -107,7 +107,7 @@ export class TenantApi<SecurityDataType = unknown> extends HttpClient<SecurityDa
    *
    * @tags tenant
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/tenant/delete
    * @secure
    */
@@ -123,47 +123,6 @@ export class TenantApi<SecurityDataType = unknown> extends HttpClient<SecurityDa
       method: 'DELETE',
       query: query,
       secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags tenant
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/tenant/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/tenant/soft-delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags tenant
-   * @name BatchSoftDelete
-   * @summary 批量删除
-   * @request PUT:/api/admin/tenant/batch-soft-delete
-   * @secure
-   */
-  batchSoftDelete = (data: number[], params: RequestParams = {}) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/tenant/batch-soft-delete`,
-      method: 'PUT',
-      body: data,
-      secure: true,
-      type: ContentType.Json,
       ...params,
     })
   /**

@@ -130,7 +130,7 @@ export class RegionApi<SecurityDataType = unknown> extends HttpClient<SecurityDa
    *
    * @tags region
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/region/delete
    * @secure
    */
@@ -143,29 +143,6 @@ export class RegionApi<SecurityDataType = unknown> extends HttpClient<SecurityDa
   ) =>
     this.request<AxiosResponse, any>({
       path: `/api/admin/region/delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags region
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/region/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/region/soft-delete`,
       method: 'DELETE',
       query: query,
       secure: true,

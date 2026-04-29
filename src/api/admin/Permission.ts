@@ -378,7 +378,7 @@ export class PermissionApi<SecurityDataType = unknown> extends HttpClient<Securi
    *
    * @tags permission
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/permission/delete
    * @secure
    */
@@ -391,29 +391,6 @@ export class PermissionApi<SecurityDataType = unknown> extends HttpClient<Securi
   ) =>
     this.request<AxiosResponse, any>({
       path: `/api/admin/permission/delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags permission
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/permission/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/permission/soft-delete`,
       method: 'DELETE',
       query: query,
       secure: true,

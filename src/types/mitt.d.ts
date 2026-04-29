@@ -78,6 +78,8 @@ declare type MittType<T = any> = {
   refreshBaseCombo: ?T
   refreshReportTemplate: ?T
   refreshBaseTenantReportExtend: ?T
+
+  refreshBasePathologyTemplate: ?T
 }
 
 // mitt 参数类型定义

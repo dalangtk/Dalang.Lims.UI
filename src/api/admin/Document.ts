@@ -268,7 +268,7 @@ export class DocumentApi<SecurityDataType = unknown> extends HttpClient<Security
    *
    * @tags document
    * @name Delete
-   * @summary 彻底删除文档
+   * @summary 删除文档
    * @request DELETE:/api/admin/document/delete
    * @secure
    */
@@ -291,7 +291,7 @@ export class DocumentApi<SecurityDataType = unknown> extends HttpClient<Security
    *
    * @tags document
    * @name DeleteImage
-   * @summary 彻底删除图片
+   * @summary 删除图片
    * @request DELETE:/api/admin/document/delete-image
    * @secure
    */
@@ -305,29 +305,6 @@ export class DocumentApi<SecurityDataType = unknown> extends HttpClient<Security
   ) =>
     this.request<AxiosResponse, any>({
       path: `/api/admin/document/delete-image`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags document
-   * @name SoftDelete
-   * @summary 删除文档
-   * @request DELETE:/api/admin/document/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/document/soft-delete`,
       method: 'DELETE',
       query: query,
       secure: true,

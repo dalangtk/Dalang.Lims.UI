@@ -1,0 +1,20 @@
+export interface TctResult {
+  satisfaction: string | null
+  squamousCount: string | null
+  metaplasticCells: string | null
+  rbc: string | null
+  inflammationRate: string | null
+  inflammation: string | null
+  trichomonad: string | null
+  fungi: string | null
+  floraChange: string | null
+  actinomyces: string | null
+  hsv: string | null
+  others: string | null
+  prepMethod: string | null
+  diagnosis: string | null
+  diagnosisEn: string | null
+  remarks: string | null
+  remarksEn: string | null
+  internalNote: string | null
+}

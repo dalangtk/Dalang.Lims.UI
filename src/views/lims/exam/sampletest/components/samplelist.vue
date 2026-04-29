@@ -102,6 +102,19 @@ const statusFilter = ref([] as any[])
 const searchText = ref('')
 const sampleListTableRef = ref<VxeGridInstance<ExamInfoOutput>>()
 
+// 监听 queryDateRange 变化
+watch(
+  () => props.queryDateRange,
+  (newValue) => {
+    //console.log('SampleList 监听到日期范围变化:', newValue)
+    if (newValue && newValue.length === 2) {
+      localDateRange.value = newValue
+      //console.log('更新 localDateRange:', localDateRange.value)
+    }
+  },
+  { immediate: true }
+)
+
 // 聚合配置
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -135,7 +148,7 @@ const handleFilter = () => {
     res = res.filter((item) => item.barcode?.toLowerCase().includes(lower) == true || item.patientName?.toLowerCase()?.includes(lower) == true)
   }
   emit('update:filteredList', res)
-  
+
   const $table = sampleListTableRef.value
   if (res && res.length > 0) {
     if (res.findIndex((v) => v.id == props.activeId) < 0) {
@@ -152,19 +165,37 @@ const handleFilter = () => {
 watch(statusFilter, handleFilter)
 
 // 监听过滤列表变化，自动选中第一行数据
-watch(() => props.filteredList, (newList) => {
+watch(
+  () => props.filteredList,
+  (newList) => {
+    const $table = sampleListTableRef.value
+    console.log('sampleList 监听到过滤列表变化:', newList)
+    if (newList && newList.length > 0) {
+      // 总是选中第一行数据
+      //switchSample(newList[0])
+      // nextTick(() => {
+      //   if ($table) {
+      //     $table.setCurrentRow(newList[0])
+      //     $table.setAllRowGroupExpand(true)
+      //   }
+      // })
+    }
+  },
+  { deep: true }
+)
+
+const expandList = () => {
+  console.log('expandList')
   const $table = sampleListTableRef.value
-  if (newList && newList.length > 0) {
-    // 总是选中第一行数据
-    switchSample(newList[0])
-    nextTick(() => {
+  if ($table) {
+    if (props.filteredList && props.filteredList.length > 0) {
       if ($table) {
-        $table.setCurrentRow(newList[0])
         $table.setAllRowGroupExpand(true)
+        $table.setCurrentRow(props.filteredList[0])
       }
-    })
+    }
   }
-}, { deep: true })
+}
 
 // 查询样本列表
 const querySampleList = (examId?: number) => {
@@ -180,6 +211,10 @@ const switchSample = (row: ExamInfoOutput) => {
     emit('switchSample', row)
   }
 }
+
+defineExpose({
+  expandList,
+})
 </script>
 
 <style scoped>

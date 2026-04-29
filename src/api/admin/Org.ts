@@ -103,7 +103,7 @@ export class OrgApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    *
    * @tags org
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/org/delete
    * @secure
    */
@@ -116,29 +116,6 @@ export class OrgApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
   ) =>
     this.request<AxiosResponse, any>({
       path: `/api/admin/org/delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags org
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/org/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/org/soft-delete`,
       method: 'DELETE',
       query: query,
       secure: true,

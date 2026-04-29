@@ -284,6 +284,7 @@ const refreshReport = () => {
 const previewReport = (fileUrl: string) => {
   if (isBlank(fileUrl)) return
   // window.open(fileUrl, '_blank')
+  console.log('previewReport', fileUrl)
   state.previewUrl = fileUrl
   state.rptPreviewShow = true
 }

@@ -93,7 +93,9 @@ const onSearch = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.validate((valid) => {
     if (valid) {
+      console.log('state.form',state.form)
       emit('search', state.form)
+      console.log(state.form)
     } else {
       return false
     }

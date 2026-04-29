@@ -2,43 +2,7 @@
   <div class="lis-layout" @mouseup="stopResize" @mousemove="onResize">
     <!-- 顶部 Header -->
     <header class="lis-header">
-      <div style="display: flex; flex-direction: row">
-        <el-select v-model="state.groupCode" style="width: 130px; margin-right: 10px" @change="groupChange">
-          <el-option v-for="g in state.groupList" :key="g.groupCode" :label="g.groupName" :value="g.groupCode"></el-option>
-        </el-select>
-        <el-button type="primary" @click="audit(OperationTypeEnum.FirstCheck)">{{ $t('message.sampleTest.firstCheck') }}</el-button>
-        <el-button type="primary" @click="audit(OperationTypeEnum.SecondCheck)">{{ $t('message.sampleTest.secondCheck') }}</el-button>
-        <el-button type="primary" @click="unAudit">{{ $t('message.sampleTest.unCheck') }}</el-button>
-        <el-button type="primary" @click="preView">{{ $t('message.sampleTest.preview') }}</el-button>
-        <el-dropdown style="margin-left: 10px" @command="handleOperation">
-          <el-button type="primary">
-            操作<el-icon class="el-icon--right"><ele-ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="RefreshItemInfo">刷新项目信息</el-dropdown-item>
-              <el-dropdown-item command="AddItem">增项</el-dropdown-item>
-              <el-dropdown-item command="DeleteItem">退项</el-dropdown-item>
-              <el-dropdown-item command="CancelTest">取消检测</el-dropdown-item>
-              <el-dropdown-item>Action 5</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-        <el-dropdown style="margin-left: 10px">
-          <el-button type="primary">
-            批量<el-icon class="el-icon--right"><ele-ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item>Action 1</el-dropdown-item>
-              <el-dropdown-item>Action 2</el-dropdown-item>
-              <el-dropdown-item>Action 3</el-dropdown-item>
-              <el-dropdown-item>Action 4</el-dropdown-item>
-              <el-dropdown-item>Action 5</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
+      <AuditToolBar :show-mutil-audit="true"></AuditToolBar>
       <el-tag effect="dark" type="success">显示: {{ state.filteredList.length }} / 总量: {{ state.totalCount }}</el-tag>
     </header>
 
@@ -67,59 +31,8 @@
       <!-- 2. 中间：检验结果 -->
       <main class="panel-center">
         <el-card shadow="never" class="result-card">
-          <template #header>
-            <div class="panel-header">
-              <span>
-                <el-icon><Operation /></el-icon>
-                检验结果
-              </span>
-            </div>
-          </template>
-          <MyTable
-            tableName="examResultTable"
-            v-if="currentSample"
-            :data="state.resultList"
-            height="100%"
-            style="flex: 1"
-            :showToolbox="false"
-            :showPaging="false"
-            stripe
-            border
-            size="small"
-            :row-class-name="tableRowClassName"
-          >
-            <el-table-column prop="itemName" label="项目名称" min-width="120" />
-            <el-table-column prop="itemResult" label="结果 (点击编辑)" min-width="140">
-              <template #default="{ row }">
-                <div v-if="row.isEditing" class="cell-editor">
-                  <el-input
-                    v-model="row.itemResult"
-                    size="small"
-                    v-focus
-                    @blur="finishEdit(row)"
-                    @keydown.enter="finishEdit(row)"
-                    :class="getAbnormalClass(row.status)"
-                  />
-                </div>
-                <div v-else class="cell-viewer" @click="startEdit(row)">
-                  <span v-if="row.itemResult" :class="getAbnormalTextClass(row.status)">
-                    {{ row.itemResult }}
-                    <span v-if="row.hlFlag === 'H'" class="flag-high">↑</span>
-                    <span v-if="row.hlFlag === 'L'" class="flag-low">↓</span>
-                    <span v-if="row.hlFlag === 'HH'" class="flag-critical">↑↑</span>
-                    <span v-if="row.hlFlag === 'LL'" class="flag-critical">↓↓</span>
-                  </span>
-                  <span v-else class="placeholder">点击录入</span>
-                </div>
-              </template>
-            </el-table-column>
-            <el-table-column prop="hlFlag" label="" width="35" />
-            <el-table-column prop="itemUnit" label="单位" width="70" />
-            <el-table-column prop="displayReference" label="参考值" width="100" />
-            <el-table-column prop="reagentName" label="试剂" width="100" />
-            <el-table-column prop="instrumentName" label="仪器" width="100" />
-          </MyTable>
-          <div v-else class="empty-state"><el-empty description="暂无数据" /></div>
+          <component :is="pathologyInputComponent"></component>
+          <!-- <SectionTable :first-check-component="props.firstCheckComponent" :second-check-component="props.secondCheckComponent"></SectionTable> -->
           <el-collapse v-model="state.actived" expand-icon-position="left" accordion @change="moreTabVisableChange">
             <el-collapse-item title="更多" name="1" style="height: 100%; overflow-y: hidden">
               <tracktab
@@ -142,7 +55,6 @@
       <!-- 3. 右侧：列表 + 综合筛选 -->
       <aside class="panel-right" :style="{ width: rightWidth + 'px' }">
         <SampleList
-          ref="sampleListRef"
           :group-code="state.groupCode"
           :all-sample-status="state.allSampleStatus"
           :all-samples="state.allSamples"
@@ -189,11 +101,11 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
 import { VxeTablePropTypes } from 'vxe-table'
-import HistoryResult from './components/historyresult.vue'
-import PatientInfo from './components/PatientInfo.vue'
-import RptPreview from './components/reportpreview.vue'
-import SampleList from './components/samplelist.vue'
-import tracktab from './components/tracktab.vue'
+import HistoryResult from '/@/views/lims/exam/sampletest/components/historyresult.vue'
+import PatientInfo from '/@/views/lims/exam/sampletest/components/PatientInfo.vue'
+import RptPreview from '/@/views/lims/exam/sampletest/components/reportpreview.vue'
+import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
+import tracktab from '/@/views/lims/exam/sampletest/components/tracktab.vue'
 import { DictGetListDto } from '/@/api/admin/data-contracts'
 import { DictApi } from '/@/api/admin/Dict'
 import { BaseSampleTypeApi } from '/@/api/lims/basedata/basesampletype'
@@ -213,6 +125,23 @@ import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { formatDate, formatDatetime, parseDate, subtractDays } from '/@/utils/formatTime'
 import PurposeSelect from '/@/views/lims/basedata/basepurpose/components/purpose-select.vue'
+import AuditToolBar from '/@/views/pathology/components/audittoolbar.vue'
+
+const props = defineProps({
+  firstCheckComponent: {
+    type: Object, // 组件定义的类型
+    required: true,
+  },
+  secondCheckComponent: {
+    type: Object, // 组件定义的类型
+    required: true,
+  },
+  pathologyInputComponent: {
+    type: Object, // 组件定义的类型
+    required: true,
+  },
+})
+
 const route = useRoute()
 const examId = history.state.examId
 
@@ -226,7 +155,6 @@ const moreTab = ref()
 const purposeSelectRef = ref()
 const delItemSelectRef = ref()
 const previewRef = ref()
-const sampleListRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -239,7 +167,6 @@ const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutpu
 
 const state = reactive({
   totalCount: 0,
-  groupList: [] as BaseGroupOutput[],
   groupCode: '1001',
   allSamples: [] as ExamInfoOutput[],
   filteredList: [] as ExamInfoOutput[],
@@ -260,10 +187,6 @@ const activeId = ref(-1)
 
 onMounted(async () => {
   state.allSampleStatus = SampleStatusUtils.getAllOptions()
-  new BaseUserGroupApi().getUserCanTestGroup({} as BaseUserGroupQueryListInput).then((res) => {
-    state.groupList = res.data!
-    if (res.data!.length > 0) state.groupCode = res.data![0].groupCode!
-  })
 
   let endDate = new Date()
   let startDate = subtractDays(new Date(), 7)
@@ -351,7 +274,7 @@ const querySampleList = (examId?: number) => {
       endDate: state.queryDateRange[1],
     } as ExamListQueryInput
   }
-  console.log('querySampleList', queryParam)
+  console.log(queryParam)
   new SampleTestApi().getSampleList(queryParam, { showErrorMessage: true }).then((res) => {
     if (res.data && res.data.length > 0) {
       res.data.forEach((item) => {
@@ -372,10 +295,7 @@ const querySampleList = (examId?: number) => {
         let filterData = state.allSamples
         state.filteredList = filterData
         console.log('state.filteredList', state.filteredList)
-        nextTick(() => {
-          sampleListRef.value?.expandList()
-          switchSample(state.allSamples[0])
-        })
+        switchSample(state.allSamples[0])
       }
     } else {
       console.log('no data')
@@ -443,7 +363,7 @@ const switchSample = (row: ExamInfoOutput) => {
         })
       }
       state.resultList = res.data!
-      console.log('switchSample', state.resultList)
+      console.log(state.resultList)
     })
   }
 }
@@ -716,7 +636,7 @@ const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L'
 <style lang="scss" scoped>
 /* 保持之前的 CSS 样式，增加 dot 样式 */
 .lis-layout {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: #f0f2f5;
@@ -730,6 +650,7 @@ const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L'
   justify-content: space-between;
   align-items: center;
   padding: 0 15px;
+  // margin-top: 10px;
   flex-shrink: 0;
   z-index: 0;
 }

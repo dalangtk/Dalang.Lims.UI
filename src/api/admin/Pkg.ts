@@ -266,7 +266,7 @@ export class PkgApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
    *
    * @tags pkg
    * @name Delete
-   * @summary 彻底删除
+   * @summary 删除
    * @request DELETE:/api/admin/pkg/delete
    * @secure
    */
@@ -282,65 +282,6 @@ export class PkgApi<SecurityDataType = unknown> extends HttpClient<SecurityDataT
       method: 'DELETE',
       query: query,
       secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags pkg
-   * @name BatchDelete
-   * @summary 批量彻底删除
-   * @request PUT:/api/admin/pkg/batch-delete
-   * @secure
-   */
-  batchDelete = (data: number[], params: RequestParams = {}) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/pkg/batch-delete`,
-      method: 'PUT',
-      body: data,
-      secure: true,
-      type: ContentType.Json,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags pkg
-   * @name SoftDelete
-   * @summary 删除
-   * @request DELETE:/api/admin/pkg/soft-delete
-   * @secure
-   */
-  softDelete = (
-    query?: {
-      /** @format int64 */
-      id?: number
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/pkg/soft-delete`,
-      method: 'DELETE',
-      query: query,
-      secure: true,
-      ...params,
-    })
-  /**
-   * No description
-   *
-   * @tags pkg
-   * @name BatchSoftDelete
-   * @summary 批量删除
-   * @request PUT:/api/admin/pkg/batch-soft-delete
-   * @secure
-   */
-  batchSoftDelete = (data: number[], params: RequestParams = {}) =>
-    this.request<AxiosResponse, any>({
-      path: `/api/admin/pkg/batch-soft-delete`,
-      method: 'PUT',
-      body: data,
-      secure: true,
-      type: ContentType.Json,
       ...params,
     })
 }

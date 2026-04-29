@@ -25,7 +25,7 @@ export interface ExamInfoAddInput {
   customerName?: string | null
   customerBarcode?: string | null
   testDate: Date
-  wFCode?: string | null
+  wfCode?: string | null
   patientTypeCode?: string | null
   patientTypeName?: string | null
   patientId?: string | null
@@ -87,6 +87,7 @@ export interface ExamInfoAddInput {
   firstAuditTime?: Date | null
   secondAuditTime?: Date | null
   createReportTime?: Date | null
+  reviewCount?: number | null
   testType?: number
   isPdfReport?: boolean
   entrustHospitalCode?: string | null
