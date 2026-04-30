@@ -160,7 +160,7 @@
           </div>
         </el-form-item>
         <el-form-item label="接收时间">
-          <div :class="{ 'is-modified-border': isModified('collectTime') }">
+          <div :class="{ 'is-modified-border': isModified('receiveTime') }">
             <el-date-picker
               v-model="editForm.receiveTime"
               type="datetime"

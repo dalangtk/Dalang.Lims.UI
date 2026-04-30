@@ -185,11 +185,12 @@ watch(
 )
 
 const expandList = () => {
-  console.log('expandList')
+  console.log('expandList1')
   const $table = sampleListTableRef.value
   if ($table) {
     if (props.filteredList && props.filteredList.length > 0) {
       if ($table) {
+        console.log('expandList2')
         $table.setAllRowGroupExpand(true)
         $table.setCurrentRow(props.filteredList[0])
       }

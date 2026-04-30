@@ -1,6 +1,6 @@
 <template>
   <PathologyTab
-    wf-code="TCT"
+    wf-code="tct"
     :pathology-input-component="TCTInput"
     :first-check-component="PathologyList"
     :second-check-component="PathologyList"

@@ -31,8 +31,7 @@
       <!-- 2. 中间：检验结果 -->
       <main class="panel-center">
         <el-card shadow="never" class="result-card">
-          <component :is="pathologyInputComponent"></component>
-          <!-- <SectionTable :first-check-component="props.firstCheckComponent" :second-check-component="props.secondCheckComponent"></SectionTable> -->
+          <component :is="pathologyInputComponent" style="flex: 1; height: 100%"></component>
           <el-collapse v-model="state.actived" expand-icon-position="left" accordion @change="moreTabVisableChange">
             <el-collapse-item title="更多" name="1" style="height: 100%; overflow-y: hidden">
               <tracktab
@@ -55,6 +54,7 @@
       <!-- 3. 右侧：列表 + 综合筛选 -->
       <aside class="panel-right" :style="{ width: rightWidth + 'px' }">
         <SampleList
+          ref="sampleListRef"
           :group-code="state.groupCode"
           :all-sample-status="state.allSampleStatus"
           :all-samples="state.allSamples"
@@ -95,36 +95,32 @@
 </template>
 
 <script lang="ts" setup name="/exam/sampletest">
-import { Operation } from '@element-plus/icons-vue'
 import 'element-plus/theme-chalk/el-table-v2.css'
 import { nextTick, onMounted, reactive, ref, watch } from 'vue'
 
 import { useRoute } from 'vue-router'
 import { VxeTablePropTypes } from 'vxe-table'
-import HistoryResult from '/@/views/lims/exam/sampletest/components/historyresult.vue'
-import PatientInfo from '/@/views/lims/exam/sampletest/components/PatientInfo.vue'
-import RptPreview from '/@/views/lims/exam/sampletest/components/reportpreview.vue'
-import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
-import tracktab from '/@/views/lims/exam/sampletest/components/tracktab.vue'
 import { DictGetListDto } from '/@/api/admin/data-contracts'
 import { DictApi } from '/@/api/admin/Dict'
 import { BaseSampleTypeApi } from '/@/api/lims/basedata/basesampletype'
-import { BaseUserGroupApi } from '/@/api/lims/basedata/baseusergroup'
-import { BaseGroupOutput } from '/@/api/lims/basedata/datacontract/group-datacontract'
 import { BasePurposeOutput, PurposeAndComboOutput } from '/@/api/lims/basedata/datacontract/purpose-datacontract'
 import { BaseSampleTypeOutput } from '/@/api/lims/basedata/datacontract/sampletype-datacontract'
-import { BaseUserGroupQueryListInput } from '/@/api/lims/basedata/datacontract/usergroup-datacontract'
 import { AddOrDeletePurposeInput, AuditInput, CancelTestInput, UnAuditInput } from '/@/api/lims/exam/datacontract/sampletest-datacontract'
 import { SampleTestApi } from '/@/api/lims/exam/sampletest'
+import { PathologyExamListQueryInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { ExamInfoOutput, ExamListQueryInput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 import { ExamResultOutput } from '/@/api/lims/shared/datacontract/examresult-datacontract'
 import { ExecuteTypeEnum, OperationTypeEnum } from '/@/api/lims/shared/enums/operationtypeenum'
 import { SampleStatus, SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
 import MySelectTable from '/@/components/my-select-table/index.vue'
-import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { formatDate, formatDatetime, parseDate, subtractDays } from '/@/utils/formatTime'
 import PurposeSelect from '/@/views/lims/basedata/basepurpose/components/purpose-select.vue'
+import HistoryResult from '/@/views/lims/exam/sampletest/components/historyresult.vue'
+import PatientInfo from '/@/views/lims/exam/sampletest/components/PatientInfo.vue'
+import RptPreview from '/@/views/lims/exam/sampletest/components/reportpreview.vue'
+import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
+import tracktab from '/@/views/lims/exam/sampletest/components/tracktab.vue'
 import AuditToolBar from '/@/views/pathology/components/audittoolbar.vue'
 
 const props = defineProps({
@@ -138,6 +134,10 @@ const props = defineProps({
   },
   pathologyInputComponent: {
     type: Object, // 组件定义的类型
+    required: true,
+  },
+  wfCode: {
+    type: String,
     required: true,
   },
 })
@@ -155,6 +155,7 @@ const moreTab = ref()
 const purposeSelectRef = ref()
 const delItemSelectRef = ref()
 const previewRef = ref()
+const sampleListRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -167,7 +168,7 @@ const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutpu
 
 const state = reactive({
   totalCount: 0,
-  groupCode: '1001',
+  groupCode: '9999',
   allSamples: [] as ExamInfoOutput[],
   filteredList: [] as ExamInfoOutput[],
   resultList: [] as ExamResultOutput[],
@@ -269,10 +270,11 @@ const querySampleList = (examId?: number) => {
     } as ExamListQueryInput
   } else {
     queryParam = {
+      wfCode: props.wfCode,
       groupCode: state.groupCode,
       beginDate: state.queryDateRange[0],
       endDate: state.queryDateRange[1],
-    } as ExamListQueryInput
+    } as PathologyExamListQueryInput
   }
   console.log(queryParam)
   new SampleTestApi().getSampleList(queryParam, { showErrorMessage: true }).then((res) => {
@@ -294,6 +296,9 @@ const querySampleList = (examId?: number) => {
         activeId.value = state.allSamples[0].id
         let filterData = state.allSamples
         state.filteredList = filterData
+        nextTick(() => {
+          sampleListRef.value.expandList()
+        })
         console.log('state.filteredList', state.filteredList)
         switchSample(state.allSamples[0])
       }
@@ -308,35 +313,7 @@ const querySampleList = (examId?: number) => {
     }
   })
 }
-const convertToTreeData = (examList: ExamInfoOutput[]): ExamListTreeData[] => {
-  // 按 testDate 分组
-  const grouped = examList.reduce(
-    (acc, item) => {
-      const dateKey = formatDate(item.testDate!, 'YYYY-mm-dd')
-      if (!acc[dateKey]) {
-        acc[dateKey] = []
-      }
-      acc[dateKey].push(item)
-      return acc
-    },
-    {} as Record<string, ExamInfoOutput[]>
-  )
 
-  // 转换为树形结构
-  return Object.entries(grouped).map(([dateString, items], index) => {
-    // 创建父节点
-    const parentNode: ExamListTreeData = {
-      testDate: new Date(dateString),
-      parent: '',
-      children: items,
-      id: -index - 1,
-      barcode: '',
-      hasCritical: false,
-    }
-
-    return parentNode
-  })
-}
 // const currentSample = computed(() => state.allSamples.find((i) => i.id === state.activeId))
 const currentSample = ref({} as ExamInfoOutput | null)
 

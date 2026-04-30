@@ -9,6 +9,7 @@
         :first-check-component="firstCheckComponent"
         :second-check-component="secondCheckComponent"
         :pathology-input-component="pathologyInputComponent"
+        :wf-code="props.wfCode"
       ></PathologyList>
     </el-tab-pane>
     <el-tab-pane label="初诊" name="FirstCheck">
@@ -17,6 +18,7 @@
         :first-check-component="firstCheckComponent"
         :second-check-component="secondCheckComponent"
         :pathology-input-component="pathologyInputComponent"
+        :wf-code="props.wfCode"
       ></PathologyList>
     </el-tab-pane>
     <el-tab-pane label="复诊" name="SecondCheck">
@@ -25,6 +27,7 @@
         :first-check-component="firstCheckComponent"
         :second-check-component="secondCheckComponent"
         :pathology-input-component="pathologyInputComponent"
+        :wf-code="props.wfCode"
       ></PathologyList>
     </el-tab-pane>
   </el-tabs>
@@ -70,10 +73,13 @@ const handleClick = (tab: TabsPaneContext, event: Event) => {
 }
 </script>
 
-<style>
+<style scoped>
 .pathology-tabs {
   height: 100%;
 }
+/* :deep(.el-tabs__header) {
+  margin: 10px 5px 10px 5px !important;
+} */
 .pathology-tabs > .el-tabs__content {
   /* padding: 32px; */
   color: #6b778c;

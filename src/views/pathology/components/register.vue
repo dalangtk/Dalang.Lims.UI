@@ -16,6 +16,7 @@
               @update:active-id="(value) => (activeId = value)"
               @switch-sample="switchSample"
               @query-sample-list="querySampleList"
+              ref="sampleListRef"
             />
           </div>
         </el-splitter-panel>
@@ -35,7 +36,21 @@
             <div class="panel-right-bottom">
               <el-card shadow="never" class="info-card">
                 <template #header>
-                  <span>基本信息</span>
+                  <div>
+                    <span style="font-size: 16px">基本信息</span>
+                    <el-button
+                      type="primary"
+                      link
+                      @click="openEditDialog"
+                      :disabled="
+                        !currentSample ||
+                        (currentSample.sampleStatus != SampleStatus.Testing.toString() &&
+                          currentSample.sampleStatus != SampleStatus.ReportDelay.toString())
+                      "
+                    >
+                      <el-icon><Edit /></el-icon>
+                    </el-button>
+                  </div>
                 </template>
                 <el-form :model="basicInfo" label-width="100px">
                   <el-row :gutter="20">
@@ -82,18 +97,157 @@
         </el-splitter-panel>
       </el-splitter>
     </div>
+
+    <el-dialog v-model="state.editDialogVisible" title="修改患者信息" width="30%">
+      <el-form :model="state.editForm" label-width="70px">
+        <el-form-item label="姓名">
+          <el-input v-model="state.editForm.patientName" :class="{ 'is-modified': isModified('patientName') }">
+            <template #suffix v-if="isModified('patientName')">
+              <el-tooltip content="该字段已修改" placement="top">
+                <el-icon color="#E6A23C"><EditPen /></el-icon>
+              </el-tooltip>
+            </template>
+          </el-input>
+        </el-form-item>
+
+        <el-form-item label="性别">
+          <el-radio-group v-model="state.editForm.genderCode" :class="{ 'is-modified-border': isModified('genderCode') }">
+            <el-radio v-for="gender in state.genderList" :key="gender.code" :label="gender.name" :value="gender.code">{{ gender.name }}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="年龄">
+          <div style="display: flex">
+            <el-input v-model="state.editForm.age1" :class="{ 'is-modified': isModified('age1') }"></el-input>
+            <el-select
+              v-model="state.editForm.ageUnit1"
+              placeholder="单位"
+              style="width: 120px; margin-left: 6px"
+              :class="{ 'is-modified-border': isModified('ageUnit1') }"
+            >
+              <el-option v-for="unit in state.ageUnitList" :key="unit.code" :label="unit.name" :value="unit.code"></el-option>
+            </el-select>
+          </div>
+        </el-form-item>
+        <el-form-item label="年龄2">
+          <div style="display: flex">
+            <el-input v-model="state.editForm.age2" :class="{ 'is-modified': isModified('age2') }"></el-input>
+            <el-select
+              v-model="state.editForm.ageUnit2"
+              placeholder="单位2"
+              style="width: 120px; margin-left: 6px"
+              :class="{ 'is-modified-border': isModified('ageUnit2') }"
+            >
+              <el-option v-for="unit in state.ageUnitList" :key="unit.code" :label="unit.name" :value="unit.code"></el-option>
+            </el-select>
+          </div>
+        </el-form-item>
+
+        <el-form-item label="标本类型">
+          <el-select v-model="state.editForm.sampleTypeCode" placeholder="标本类型" :class="{ 'is-modified-border': isModified('sampleTypeCode') }">
+            <el-option v-for="t in state.sampleTypeList" :key="t.sampleTypeCode" :label="t.sampleTypeName" :value="t.sampleTypeCode"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="标本性状">
+          <el-select
+            v-model="state.editForm.samplePropertyCode"
+            placeholder="标本性状"
+            :class="{ 'is-modified-border': isModified('samplePropertyCode') }"
+          >
+            <el-option v-for="t in state.samplePropertyList" :key="t.code" :label="t.name" :value="t.code"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="科室">
+          <el-input v-model="state.editForm.department" :class="{ 'is-modified': isModified('department') }"> </el-input>
+        </el-form-item>
+        <el-form-item label="医生">
+          <el-input v-model="state.editForm.doctor" :class="{ 'is-modified': isModified('doctor') }"> </el-input>
+        </el-form-item>
+        <el-form-item label="床号">
+          <el-input v-model="state.editForm.bedNo" :class="{ 'is-modified': isModified('bedNo') }"> </el-input>
+        </el-form-item>
+        <el-form-item label="病员号">
+          <el-input v-model="state.editForm.patientId" :class="{ 'is-modified': isModified('patientId') }"> </el-input>
+        </el-form-item>
+        <el-form-item label="客户条码">
+          <el-input v-model="state.editForm.customerBarcode" :class="{ 'is-modified': isModified('customerBarcode') }"> </el-input>
+        </el-form-item>
+
+        <el-form-item label="采样时间">
+          <div :class="{ 'is-modified-border': isModified('collectTime') }">
+            <el-date-picker
+              v-model="state.editForm.collectTime"
+              type="datetime"
+              placeholder="Pick a Date"
+              format="YYYY-MM-DD HH:mm:ss"
+              :class="{ 'is-modified-border': isModified('collectTime') }"
+            />
+          </div>
+        </el-form-item>
+        <el-form-item label="接收时间">
+          <div :class="{ 'is-modified-border': isModified('receiveTime') }">
+            <el-date-picker
+              v-model="state.editForm.receiveTime"
+              type="datetime"
+              placeholder="Pick a Date"
+              format="YYYY-MM-DD HH:mm:ss"
+              :class="{ 'is-modified-border': isModified('receiveTime') }"
+            />
+          </div>
+        </el-form-item>
+
+        <el-form-item label="诊断">
+          <el-input
+            v-model="state.editForm.clinicalDiagnosis"
+            type="textarea"
+            :rows="2"
+            :class="{ 'is-modified': isModified('clinicalDiagnosis') }"
+          />
+        </el-form-item>
+        <el-form-item label="结果说明">
+          <el-input
+            v-model="state.editForm.resultDescription"
+            type="textarea"
+            :rows="2"
+            :class="{ 'is-modified': isModified('resultDescription') }"
+          />
+        </el-form-item>
+        <el-form-item label="建议解释">
+          <el-input v-model="state.editForm.suggestion" type="textarea" :rows="2" :class="{ 'is-modified': isModified('suggestion') }" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="state.editForm.remark" type="textarea" :rows="2" :class="{ 'is-modified': isModified('remark') }" />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="state.editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="savePatientInfo">保存修改</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
+import { Edit, EditPen, User } from '@element-plus/icons-vue'
 import { nextTick, onMounted, reactive, ref } from 'vue'
-import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
-import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
-import { SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
-import { formatDate, formatDatetime, subtractDays } from '/@/utils/formatTime'
-import { SampleTestApi } from '/@/api/lims/exam/sampletest'
 import { PathologyExamListQueryInput, PathologyReceiveInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
+import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
+import { SampleStatus, SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
+import { formatDate, formatDatetime, subtractDays } from '/@/utils/formatTime'
+import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
+import { DictGetListDto } from '/@/api/admin/data-contracts'
+import { BaseSampleTypeOutput } from '/@/api/lims/basedata/datacontract/sampletype-datacontract'
+import { isDoStatement } from 'typescript'
+import DateTimeComparator from '/@/utils/timeCompare'
+import modal from '/@/globalProperties/modal'
+import { UpdatePatientInfoInput } from '/@/api/lims/exam/datacontract/sampletest-datacontract'
+import { SampleTestApi } from '/@/api/lims/exam/sampletest'
+import { DictApi } from '/@/api/admin/Dict'
+import { BaseSampleTypeApi } from '/@/api/lims/basedata/basesampletype'
 
 const props = defineProps({
   wfCode: {
@@ -107,9 +261,17 @@ const state = reactive({
   filteredList: [] as ExamInfoOutput[],
   allSampleStatus: [] as Array<{ code: number; name: string }>,
   queryDateRange: [] as any[],
+  editDialogVisible: false,
+  editForm: {} as any,
+  originalSnapshot: {} as any,
+  genderList: [] as DictGetListDto[] | null,
+  ageUnitList: [] as DictGetListDto[] | null,
+  sampleTypeList: [] as BaseSampleTypeOutput[],
+  samplePropertyList: [] as DictGetListDto[] | null,
 })
 
 const activeId = ref(-1)
+const sampleListRef = ref()
 const currentSample = ref<ExamInfoOutput | null>(null)
 
 const form = reactive({
@@ -128,6 +290,19 @@ const basicInfo = reactive({
 })
 
 onMounted(() => {
+  new BaseSampleTypeApi()
+    .getAll()
+    .then((res) => {
+      state.sampleTypeList = res!.data!
+    })
+    .catch((e) => {
+      modal.msgError(e)
+    })
+  new DictApi().getList(['Gender', 'AgeUnit', 'SampleProperty']).then((res) => {
+    state.genderList = res.data!.gender
+    state.ageUnitList = res.data!.ageUnit
+    state.samplePropertyList = res.data!.sampleProperty
+  })
   state.allSampleStatus = SampleStatusUtils.getAllOptions()
 
   nextTick(() => {
@@ -163,6 +338,9 @@ const querySampleList = (examId?: number) => {
       if (state.allSamples.length > 0) {
         activeId.value = state.allSamples[0].id
         state.filteredList = state.allSamples
+        nextTick(() => {
+          sampleListRef.value.expandList()
+        })
         switchSample(state.allSamples[0])
       }
     } else {
@@ -178,13 +356,10 @@ const querySampleList = (examId?: number) => {
 const switchSample = (row: ExamInfoOutput) => {
   activeId.value = row.id
   currentSample.value = row
-  form.barcode = row.barcode || ''
-  form.sampleNo = row.sampleNo || ''
   refreshBasicInfo()
 }
 
 const handleBarcodeEnter = () => {
-  // alert(form.barcode)
   let param = {
     barcode: form.barcode,
     sampleNo: form.sampleNo,
@@ -211,7 +386,63 @@ const refreshBasicInfo = () => {
     clearBasicInfo()
   }
 }
+const openEditDialog = () => {
+  if (!currentSample.value) return
+  if (
+    currentSample.value?.sampleStatus != SampleStatus.Testing.toString() &&
+    currentSample.value?.sampleStatus != SampleStatus.ReportDelay.toString()
+  )
+    return
 
+  state.originalSnapshot = { ...currentSample.value }
+
+  Object.keys(state.editForm).forEach((k: any) => delete state.editForm[k])
+  Object.assign(state.editForm, state.originalSnapshot)
+
+  state.editDialogVisible = true
+}
+const isModified = (key: string) => {
+  let editVal = state.editForm[key]
+  let oriVal = state.originalSnapshot[key]
+  if (editVal instanceof Date || oriVal instanceof Date) {
+    var result = DateTimeComparator.compare(editVal, oriVal, { useUTC: true })
+    return !result
+  } else {
+    return state.editForm[key] !== state.originalSnapshot[key]
+  }
+}
+const savePatientInfo = () => {
+  const target = state.allSamples.find((i) => i.id === activeId.value)
+  if (!target) return
+
+  const changes = {} as any
+  Object.keys(state.editForm).forEach((key) => {
+    if (state.editForm[key] !== state.originalSnapshot[key]) {
+      changes[key] = state.editForm[key]
+    }
+  })
+
+  const changedKeys = Object.keys(changes)
+  if (changedKeys.length === 0) {
+    modal.msg('数据未发生变化')
+    state.editDialogVisible = false
+    return
+  }
+
+  let param = {
+    examInfo: { id: target.id, ...changes },
+    updateFields: changedKeys,
+  } as UpdatePatientInfoInput
+
+  new SampleTestApi().updatePatientInfo(param).then((res) => {
+    if (res.success) {
+      modal.msgSuccess('保存成功')
+      Object.assign(target, changes)
+      modal.msgSuccess(`已更新字段: ${changedKeys.join(', ')}`)
+      state.editDialogVisible = false
+    }
+  })
+}
 const clearBasicInfo = () => {
   basicInfo.patientName = ''
   basicInfo.genderName = ''
