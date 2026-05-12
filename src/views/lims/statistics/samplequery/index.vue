@@ -306,14 +306,18 @@ const onApplyInfoChange = (row: ApplyInfoOutput) => {
 }
 
 const jumpToExam = async (row: ExamInfoOutput) => {
+  if (row.groupCode == '9999') {
+    modal.msgWarning('病理跳转开发中...')
+    return
+  }
   let checkRet = await new BaseUserGroupApi().checkUserTestPermission({ groupCode: row.groupCode! })
   console.log(checkRet)
   if (!checkRet.success) {
     modal.msgError('无检验权限')
     return
   }
-  console.log('row',row)
-  router.push({ name: '/sampletest', state: { groupCode: row.groupCode, examId: row.id } })
+  console.log('row', row)
+  router.push({ name: '/exam/sampletest', state: { groupCode: row.groupCode, examId: row.id } })
 }
 </script>
 

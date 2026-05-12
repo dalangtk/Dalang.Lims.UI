@@ -8,6 +8,7 @@
       :data="state.ListData"
       ref="table"
       :total="state.total"
+      row-key="id"
       v-on:pageOrSizeChange="onTablePageOrSizeChange"
       :loading="state.loading"
       stripe

@@ -18,6 +18,19 @@
           新增</el-button
         >
       </template>
+      <el-table-column prop="customerCode" label="客户代码" show-overflow-tooltip width />
+      <el-table-column prop="customerPurCode" label="客户目的代码" show-overflow-tooltip width />
+      <el-table-column prop="customerPurName" label="客户目的名称" show-overflow-tooltip width />
+      <el-table-column prop="centralPurCode" label="中心目的代码" show-overflow-tooltip width />
+      <el-table-column prop="centralPurName" label="中心目的名称" show-overflow-tooltip width />
+      <el-table-column prop="sort" label="排序" show-overflow-tooltip width />
+      <el-table-column prop="isCombo" label="是否组合目的" min-width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.isCombo === 1 ? 'success' : 'warning'">
+            {{ row.isCombo === 1 ? '是' : '否' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="isValid" label="状态" min-width="100">
         <template #default="{ row }">
           <el-tag :type="row.isValid === true ? 'success' : 'warning'">
@@ -43,16 +56,14 @@
 <script lang="ts" setup name="/pretreatment/customerpurposematch">
 import { getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
-import {
-  PurposeMatchOutput,
-  PurposeMatchQueryListInput
-} from '/@/api/lims/pretreatment/datacontract/pretreatcustomerpurposematch-datacontract'
+import { PurposeMatchOutput, PurposeMatchQueryListInput } from '/@/api/lims/pretreatment/datacontract/pretreatcustomerpurposematch-datacontract'
 import TableSearch from '/@/components/my-table/MyTableSearch.vue'
 import MyTable from '/@/components/my-table/index.vue'
 
 import { PretreatCustomerPurposeMatchApi } from '/@/api/lims/pretreatment/pretreatcustomerpurposematch'
 import { auth, authAll } from '/@/utils/authFunction'
 import eventBus from '/@/utils/mitt'
+import modal from '/@/globalProperties/modal'
 
 // 引入组件
 // const PretreatCustomerPurposeMatchForm = defineAsyncComponent(() => import('./components/customerpurposematch-form.vue'))
@@ -115,11 +126,13 @@ const onQuery = async () => {
 }
 
 const onAdd = () => {
+  modal.msgWarning('新增目的对照功能开发中...')
   state.pretreatCustomerPurposeMatchFormTitle = '新增目的对照'
   // pretreatCustomerPurposeMatchFormRef.value.open()
 }
 
 const onEdit = (row: PurposeMatchOutput) => {
+  modal.msgWarning('编辑目的对照功能开发中...')
   state.pretreatCustomerPurposeMatchFormTitle = '编辑目的对照'
   // pretreatCustomerPurposeMatchFormRef.value.open(row)
 }

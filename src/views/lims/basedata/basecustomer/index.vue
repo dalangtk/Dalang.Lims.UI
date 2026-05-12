@@ -7,6 +7,7 @@
       class="my-table"
       :data="state.baseCustomerListData"
       ref="table"
+      size="small"
       fit="true"
       :total="state.total"
       v-on:pageOrSizeChange="onTablePageOrSizeChange"

@@ -10,6 +10,7 @@
             class="my-table"
             :data="state.baseComboListData"
             ref="table"
+            size="small"
             row-key="id"
             :total="state.total"
             v-on:pageOrSizeChange="onTablePageOrSizeChange"
@@ -68,10 +69,7 @@
 <script lang="ts" setup name="/basedata/basecombo">
 import { defineAsyncComponent, getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
-import {
-  BaseComboOutput,
-  BaseComboQueryInput
-} from '/@/api/lims/basedata/datacontract/combo-datacontract'
+import { BaseComboOutput, BaseComboQueryInput } from '/@/api/lims/basedata/datacontract/combo-datacontract'
 import TableSearch from '/@/components/my-table/MyTableSearch.vue'
 import MyTable from '/@/components/my-table/index.vue'
 import ComboDetail from '/@/views/lims/basedata/basecombo/components/combodetail.vue'

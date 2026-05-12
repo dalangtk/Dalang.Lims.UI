@@ -47,8 +47,7 @@
         <MyTable :style="mystyle" :data="state.imageList" border stripe :show-paging="false" :show-toolbox="false">
           <template #headerButton v-if="imageCanEdit">
             <el-upload
-              class="el-button el-button--primary el-button--default"
-              style="width: 79px"
+              style="width: 40px; height: 20px"
               ref="uploadRef"
               :action="uploadAction"
               :show-file-list="false"
@@ -412,5 +411,8 @@ defineExpose({
   color: #ccc;
   font-size: 12px;
   font-style: italic;
+}
+:deep(.el-tabs__header) {
+  margin-bottom: 0 !important;
 }
 </style>

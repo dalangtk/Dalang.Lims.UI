@@ -18,6 +18,7 @@
           class="my-table"
           :data="DetailModel.purposeInstrumentItem"
           ref="table"
+          size="small"
           :loading="state.loading"
           stripe
           :show-paging="false"
@@ -44,14 +45,28 @@
     <!-- :body-style="{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', overflow: 'hidden' }" -->
     <div class="ddiv">
       <el-card :loading="state.loading" stripe :show-paging="false" border tableName="目的-项目明细" class="my-table">
-        <MyTable :data="DetailModel.purposeItemDetail" style="height: 100%" @cell-click="showUnitInput" border>
+        <MyTable :data="DetailModel.purposeItemDetail" style="height: 100%" size="small" @cell-click="showUnitInput" border>
           <template #headerButton>
             <el-tag type="primary" size="small">目的明细</el-tag>
           </template>
           <el-table-column prop="instrumentItemName" label="上机项目名称" show-overflow-tooltip width="120" />
           <el-table-column prop="itemCode" label="项目代码" show-overflow-tooltip width />
           <el-table-column prop="itemName" label="项目名称" show-overflow-tooltip width />
-          <el-table-column prop="resultType" label="结果类型" show-overflow-tooltip width />
+          <el-table-column prop="resultType" label="结果类型" show-overflow-tooltip width>
+            <template #default="{ row, column }">
+              <el-select
+                size="small"
+                v-if="tableRowEditId === row.id && tableColumnEditIndex === column.id"
+                @blur="blurValueInput(row, column)"
+                v-model="row.resultType"
+                filterable
+                clearable
+              >
+                <el-option v-for="item in state.resultTypeList" :key="item.code" :label="item.name" :value="item.code"> </el-option>
+              </el-select>
+              <span v-else>{{ state.resultTypeList?.find((v) => v.code == row.resultType)?.name }}</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="method" label="方法学" show-overflow-tooltip width>
             <template #default="{ row, column }">
               <el-select
@@ -117,7 +132,7 @@ import {
   BasePurposeDetailAddInput,
   BasePurposeDetailOutput,
   BasePurposeDetailUpdateInput,
-  PurposeDetailInput
+  PurposeDetailInput,
 } from '/@/api/lims/basedata/datacontract/purpose-datacontract'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
@@ -169,11 +184,13 @@ const state = reactive({
   loading: false,
   sels: [] as Array<BasePurposeDetailOutput>,
   methodList: [] as DictGetListDto[] | null,
+  resultTypeList: [] as DictGetListDto[] | null,
 })
 
 onMounted(async () => {
-  new DictApi().getList(['Method']).then((res) => {
+  new DictApi().getList(['Method', 'ResultType']).then((res) => {
     state.methodList = res.data!.method
+    state.resultTypeList = res.data!.resultType
   })
 })
 

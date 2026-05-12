@@ -8,6 +8,7 @@
         class="my-table"
         :data="state.baseSorterListData"
         ref="table"
+        size="small"
         :total="state.total"
         v-on:pageOrSizeChange="onTablePageOrSizeChange"
         :loading="state.loading"

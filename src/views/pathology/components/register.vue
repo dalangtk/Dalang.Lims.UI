@@ -17,6 +17,7 @@
               @switch-sample="switchSample"
               @query-sample-list="querySampleList"
               ref="sampleListRef"
+              @date-change="handleDateUpdate"
             />
           </div>
         </el-splitter-panel>
@@ -29,6 +30,9 @@
                 </el-form-item>
                 <el-form-item label="病理号" prop="sampleNo">
                   <el-input v-model="form.sampleNo" placeholder="请输入病理号" clearable />
+                </el-form-item>
+                <el-form-item label="" prop="sampleNo">
+                  <el-button type="primary" @click="handleDeleteSample">删除</el-button>
                 </el-form-item>
               </el-form>
             </div>
@@ -233,7 +237,7 @@
 <script lang="ts" setup>
 import { Edit, EditPen, User } from '@element-plus/icons-vue'
 import { nextTick, onMounted, reactive, ref } from 'vue'
-import { PathologyExamListQueryInput, PathologyReceiveInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
+import { PathologyBackInput, PathologyExamListQueryInput, PathologyReceiveInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
 import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 import { SampleStatus, SampleStatusUtils } from '/@/api/lims/shared/enums/samplestatusenum'
@@ -314,6 +318,10 @@ onMounted(() => {
   })
 })
 
+const handleDateUpdate = (value: any[]) => {
+  console.log('handleDateUpdate2', value)
+  state.queryDateRange = value
+}
 const querySampleList = (examId?: number) => {
   console.log('querySampleList')
   const queryParam: any = {
@@ -369,6 +377,18 @@ const handleBarcodeEnter = () => {
     if (res.data) {
       // switchSample(res.data)
       console.log('res.data', res.data)
+    }
+  })
+}
+
+const handleDeleteSample = () => {
+  let param = {
+    wfCode: props.wfCode,
+    examInfoIdList: [currentSample.value!.id],
+  } as PathologyBackInput
+  new PathologyTestApi().pathologyBack(param, { showErrorMessage: true }).then((res) => {
+    if (res.data) {
+      querySampleList()
     }
   })
 }

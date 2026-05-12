@@ -77,6 +77,7 @@ const preview = async () => {
     new SampleTestApi()
       .rptPreview({ examInfoId: props.examInfoId }, { showErrorMessage: false })
       .then(async (res) => {
+        console.log('res', res.type)
         if (res.type.includes('application/json')) {
           let fileReader = new FileReader()
           fileReader.readAsText(res)

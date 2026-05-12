@@ -1,20 +1,16 @@
-<template>
-  <div class="my-flex-column w100 h100">
+﻿<template>
+  <div class="my-layout my-container">
     <TableSearch :search="state.search" @search="onSearch" />
     <MyTable
       border
-      tableName="检测计划"
+      tableName="baseGroup"
       class="my-table"
-      :data="state.baseExamPlanListData"
+      :data="state.basePathologySettingListData"
       ref="table"
-      size="small"
       :total="state.total"
       v-on:pageOrSizeChange="onTablePageOrSizeChange"
       :loading="state.loading"
       stripe
-      highlight-current-row
-      @current-change="currentRowChange"
-      row-key="id"
     >
       <template #headerButton>
         <el-button v-if="auth(perms.add)" type="primary" size="small" @click="onAdd">
@@ -22,18 +18,21 @@
           新增</el-button
         >
       </template>
-      <el-table-column prop="examPlanCode" label="代码" show-overflow-tooltip width />
-      <el-table-column prop="examPlanName" label="名称" show-overflow-tooltip width />
-      <el-table-column prop="planType" label="计划类型" show-overflow-tooltip width />
-      <el-table-column prop="planCycle" label="检测周期" show-overflow-tooltip width />
-      <el-table-column prop="isIncludeHoliday" label="包含节假日" show-overflow-tooltip width>
+      <el-table-column prop="wfCode" label="工作流" show-overflow-tooltip width />
+      <el-table-column prop="auditType" label="审核模式" show-overflow-tooltip width>
         <template #default="{ row }">
-          <el-tag :type="row.isIncludeHoliday === true ? 'success' : 'warning'">
-            {{ row.isIncludeHoliday === true ? '是' : '否' }}
-          </el-tag>
+          {{ row.auditType === 1 ? '初复诊' : '复诊' }}
         </template>
       </el-table-column>
-      <el-table-column prop="remark" label="备注" show-overflow-tooltip width />
+      <el-table-column prop="sampleNoSymbol" label="前缀" show-overflow-tooltip width />
+      <el-table-column prop="reviewUserId" label="审核人Id" show-overflow-tooltip width />
+      <el-table-column prop="reviewUserName" label="审核人" show-overflow-tooltip width />
+      <el-table-column prop="reportCycle" label="报告周期" show-overflow-tooltip width />
+      <el-table-column prop="canSameUserReport" label="同用户报告" show-overflow-tooltip width>
+        <template #default="{ row }">
+          {{ row.canSameUserReport === true ? '是' : '否' }}
+        </template>
+      </el-table-column>
       <el-table-column prop="sort" label="排序" show-overflow-tooltip width />
       <el-table-column prop="isValid" label="状态" min-width="100">
         <template #default="{ row }">
@@ -50,64 +49,68 @@
       </el-table-column>
     </MyTable>
 
-    <BaseExamPlanForm ref="baseExamPlanFormRef" :title="state.baseExamPlanFormTitle"></BaseExamPlanForm>
+    <base-pathology-setting-form ref="basePathologySettingFormRef" :title="state.basePathologySettingFormTitle"></base-pathology-setting-form>
   </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup name="lims/basepathologysetting">
 import { ref, reactive, onMounted, getCurrentInstance, onBeforeMount, defineAsyncComponent, computed } from 'vue'
 import TableSearch from '/@/components/my-table/MyTableSearch.vue'
 import MyTable from '/@/components/my-table/index.vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
-import { BaseExamPlanOutput, BaseExamPlanListOutput, BaseExamPlanQueryListInput } from '/@/api/lims/basedata/datacontract/examplan-datacontract'
+import {
+  BasePathologySettingOutput,
+  BasePathologySettingListOutput,
+  BasePathologySettingQueryListInput,
+} from '/@/api/lims/pathology/datacontract/pathologysetting-datacontract'
 
-import { BaseExamPlanApi } from '/@/api/lims/basedata/baseexamplan'
+import { BasePathologySettingApi } from '/@/api/lims/pathology/pathologysetting'
 import eventBus from '/@/utils/mitt'
 import { auth, auths, authAll } from '/@/utils/authFunction'
 import modal from '/@/globalProperties/modal'
-const emit = defineEmits(['onCurrRowChange'])
 
 // 引入组件
-const BaseExamPlanForm = defineAsyncComponent(() => import('./base-exam-plan-form.vue'))
+const BasePathologySettingForm = defineAsyncComponent(() => import('./components/base-pathology-setting-form.vue'))
 
 const { proxy } = getCurrentInstance() as any
 var table = ref()
-const baseExamPlanFormRef = ref()
+const basePathologySettingFormRef = ref()
 
 //权限配置
 const perms = {
-  add: 'api:lims:base-exam-plan:add',
-  update: 'api:lims:base-exam-plan:update',
-  delete: 'api:lims:base-exam-plan:delete',
+  add: 'api:lims:base-pathology-setting:add',
+  update: 'api:lims:base-pathology-setting:update',
+  delete: 'api:lims:base-pathology-setting:delete',
+  batDelete: 'api:lims:base-pathology-setting:batch-delete',
 }
 
 const actionColWidth = authAll([perms.update, perms.delete]) ? 135 : 70
 
 const state = reactive({
   loading: false,
-  baseExamPlanFormTitle: '',
+  basePathologySettingFormTitle: '',
   total: 0,
   search: [],
-  sels: [] as Array<BaseExamPlanOutput>,
-  filter: {} as BaseExamPlanQueryListInput,
+  sels: [] as Array<BasePathologySettingOutput>,
+  filter: {} as BasePathologySettingQueryListInput,
   pageInput: {
     currentPage: 1,
     pageSize: 20,
     filter: {},
-  } as GetPageInput<BaseExamPlanQueryListInput>,
-  baseExamPlanListData: [] as Array<BaseExamPlanOutput>,
+  } as GetPageInput<BasePathologySettingQueryListInput>,
+  basePathologySettingListData: [] as Array<BasePathologySettingOutput>,
 })
 
 onMounted(() => {
   onQuery()
-  eventBus.off('refreshBaseExamPlan')
-  eventBus.on('refreshBaseExamPlan', async () => {
+  eventBus.off('refreshBasePathologySetting')
+  eventBus.on('refreshBasePathologySetting', async () => {
     onQuery()
   })
 })
 
 onBeforeMount(() => {
-  eventBus.off('refreshBaseExamPlan')
+  eventBus.off('refreshBasePathologySetting')
 })
 
 const onSearch = (data: EmptyObjectType) => {
@@ -118,34 +121,30 @@ const onSearch = (data: EmptyObjectType) => {
 const onQuery = async () => {
   state.loading = true
   //state.pageInput.filter = state.filter
-  const res = await new BaseExamPlanApi().getPage(state.pageInput).catch(() => {
+  const res = await new BasePathologySettingApi().getPage(state.pageInput).catch(() => {
     state.loading = false
   })
 
-  state.baseExamPlanListData = res?.data?.list ?? []
+  state.basePathologySettingListData = res?.data?.list ?? []
   state.total = res?.data?.total ?? 0
   state.loading = false
-
-  if (res?.data?.list) {
-    table.value.setCurrentRow(res.data.list[0] ?? null)
-  }
 }
 
 const onAdd = () => {
-  state.baseExamPlanFormTitle = '新增检测计划'
-  baseExamPlanFormRef.value.open()
+  state.basePathologySettingFormTitle = '新增病理配置'
+  basePathologySettingFormRef.value.open()
 }
 
-const onEdit = (row: BaseExamPlanOutput) => {
-  state.baseExamPlanFormTitle = '编辑检测计划'
-  baseExamPlanFormRef.value.open(row)
+const onEdit = (row: BasePathologySettingOutput) => {
+  state.basePathologySettingFormTitle = '编辑病理配置'
+  basePathologySettingFormRef.value.open(row)
 }
 
-const onDelete = (row: BaseExamPlanOutput) => {
+const onDelete = (row: BasePathologySettingOutput) => {
   modal
-    .confirmDelete(`确定要删除【${row.examPlanName}】?`, null)
+    .confirmDelete(`确定要删除配置【${row.wfCode}】?`, null)
     .then(async () => {
-      await new BaseExamPlanApi().delete({ id: row.id }, { loading: true, showSuccessMessage: true })
+      await new BasePathologySettingApi().delete({ id: row.id }, { loading: true, showSuccessMessage: true })
       onQuery()
     })
     .catch(() => {})
@@ -156,12 +155,6 @@ const onTablePageOrSizeChange = async (page: TablePageType) => {
   state.pageInput.pageSize = page.pageSize
   await onQuery()
 }
-const currentRowChange = (val: BaseExamPlanOutput | undefined) => {
-  emit('onCurrRowChange', val)
-}
-defineExpose({
-  currentRowChange,
-})
 </script>
 <style scoped>
 .my-container {

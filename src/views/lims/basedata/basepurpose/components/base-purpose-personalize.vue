@@ -7,6 +7,7 @@
       class="my-table"
       :data="DetailModel.purposePersonalizes"
       ref="table"
+      size="small"
       :loading="state.loading"
       stripe
       :show-paging="false"

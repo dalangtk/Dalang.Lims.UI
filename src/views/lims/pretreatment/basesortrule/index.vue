@@ -8,6 +8,7 @@
         class="my-table"
         :data="state.baseSortRuleListData"
         ref="table"
+        size="small"
         :total="state.total"
         v-on:pageOrSizeChange="onTablePageOrSizeChange"
         :loading="state.loading"
@@ -27,14 +28,14 @@
         <el-table-column prop="ruleName" label="规则名称" show-overflow-tooltip width />
         <el-table-column prop="sequenceCode" label="序列代码" show-overflow-tooltip width />
         <el-table-column prop="itemCount" label="匹配项目数" show-overflow-tooltip width />
-        <el-table-column prop="isSortAll" label="是否分拣所有" show-overflow-tooltip width>
+        <el-table-column prop="isSortAll" label="分拣所有" show-overflow-tooltip width>
           <template #default="{ row }">
             <el-tag :type="row.isSortAll === true ? 'success' : 'warning'">
               {{ row.isSortAll === true ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isBatch" label="是否批量规则" show-overflow-tooltip width>
+        <el-table-column prop="isBatch" label="是否批量" show-overflow-tooltip width>
           <template #default="{ row }">
             <el-tag :type="row.isBatch === true ? 'success' : 'warning'">
               {{ row.isBatch === true ? '是' : '否' }}

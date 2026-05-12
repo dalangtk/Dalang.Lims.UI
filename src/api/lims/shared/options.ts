@@ -155,4 +155,23 @@ export class BaseOptionsApi<SecurityDataType = unknown> extends HttpClient<Secur
       format: 'json',
       ...params,
     })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetUserOptions
+   * @summary 获取用户选项
+   * @request POST:/api/lims/option-list/get-user-options
+   * @secure
+   */
+  getUserOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-user-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
 }

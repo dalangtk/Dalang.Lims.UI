@@ -12,8 +12,7 @@
           size="small"
           value-format="YYYY-MM-DD"
           style="width: 100%; margin-bottom: 6px"
-          @update:modelValue="handleDateUpdate"
-          @change="handleDateChange"
+          @change="(value: any[]) => handleDateUpdate2(value)"
         />
         <!-- 状态筛选 -->
         <el-select
@@ -88,12 +87,13 @@ const props = defineProps<{
 
 // Emits
 const emit = defineEmits<{
+  (e: 'update:modelValue', value: any[]): void
   (e: 'update:allSamples', value: ExamInfoOutput[]): void
   (e: 'update:filteredList', value: ExamInfoOutput[]): void
   (e: 'update:activeId', value: number): void
   (e: 'switchSample', row: ExamInfoOutput): void
   (e: 'querySampleList', examId?: number): void
-  (e: 'update:queryDateRange', value: any[]): void
+  (e: 'dateChange', value: any[]): void
 }>()
 
 // 响应式数据
@@ -109,7 +109,7 @@ watch(
     //console.log('SampleList 监听到日期范围变化:', newValue)
     if (newValue && newValue.length === 2) {
       localDateRange.value = newValue
-      //console.log('更新 localDateRange:', localDateRange.value)
+      console.log('更新 localDateRange:', localDateRange.value)
     }
   },
   { immediate: true }
@@ -126,8 +126,8 @@ const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutpu
 })
 
 // 日期更新处理
-const handleDateUpdate = (value: any[]) => {
-  emit('update:queryDateRange', value)
+const handleDateUpdate2 = (value: any[]) => {
+  emit('dateChange', value)
 }
 
 // 日期变化处理

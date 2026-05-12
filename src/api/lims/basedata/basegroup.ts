@@ -63,7 +63,7 @@ export class BaseGroupApi<SecurityDataType = unknown> extends HttpClient<Securit
    * @secure
    */
   getAll = () =>
-    this.request<ResultBaseOutput<Array<BaseGroupOutput>>, any>({
+    this.request<ResultBaseOutput<Array<BaseGroupListOutput>>, any>({
       path: `/api/lims/base-group/get-all`,
       method: 'GET',
       secure: true,

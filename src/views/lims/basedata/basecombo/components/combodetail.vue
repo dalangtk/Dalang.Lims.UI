@@ -1,6 +1,6 @@
 <template>
   <div class="combo-detail">
-    <MyTable :data="state.comboDetail" :show-paging="false" :show-toolbox="false">
+    <MyTable :data="state.comboDetail" size="small" :show-paging="false" :show-toolbox="false">
       <template #headerButton v-if="!props.readonly">
         <el-button type="primary" size="small" @click="addComboDetail">
           <SvgIcon name="ele-Plus" />

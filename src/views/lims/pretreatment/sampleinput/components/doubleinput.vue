@@ -814,6 +814,7 @@ defineExpose({
 }
 .right-tabs {
   height: 100%;
+  margin-left: 5px;
 }
 
 /* 覆盖 ElementPlus 紧凑样式 */

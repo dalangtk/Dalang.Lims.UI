@@ -8,3 +8,7 @@ export interface PathologyReceiveInput {
   sampleNo: string | null
   wfCode: string | null
 }
+export interface PathologyBackInput {
+  wfCode: string | null
+  examInfoIdList: number[] | null
+}

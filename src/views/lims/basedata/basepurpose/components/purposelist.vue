@@ -7,6 +7,7 @@
       class="my-table"
       :data="state.basePurposeListData"
       ref="table"
+      size="small"
       :total="state.total"
       v-on:pageOrSizeChange="onTablePageOrSizeChange"
       :loading="state.loading"

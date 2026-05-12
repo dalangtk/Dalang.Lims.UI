@@ -284,14 +284,35 @@ export class SampleTestApi<SecurityDataType = unknown> extends HttpClient<Securi
    * @request POST:/api/exam/sample-test/cancel-test
    * @secure
    */
-  rptPreview = (data: any, params: RequestParams = {}) =>
+  rptPreview = (
+    query?: {
+      /** @format int64 */
+      examInfoId?: number
+    },
+    params: RequestParams = {}
+  ) =>
     this.request<any, any>({
       path: `/api/exam/sample-test/rpt-preview`,
       method: 'POST',
-      body: data,
+      query: query,
       secure: true,
       type: ContentType.Json,
       format: 'blob',
+      ...params,
+    })
+  rptPreview2 = (
+    query?: {
+      /** @format int64 */
+      examInfoId?: number
+    },
+    params: RequestParams = {}
+  ) =>
+    this.request<any, any>({
+      path: `/api/exam/sample-test/rpt-preview`,
+      method: 'GET',
+      query: query,
+      secure: true,
+      format: 'json',
       ...params,
     })
   /**

@@ -6,6 +6,7 @@
       class="my-table"
       :data="state.baseAskRuleDetailListData"
       ref="table"
+      size="small"
       :loading="state.loading"
       :show-paging="false"
       stripe
@@ -19,7 +20,7 @@
           >
         </div>
       </template>
-      <el-table-column prop="askRuleCode" label="问询规则代码" show-overflow-tooltip width />
+      <el-table-column prop="askRuleCode" label="规则代码" show-overflow-tooltip width />
       <el-table-column prop="entrustCycle" label="委托周期" show-overflow-tooltip width />
       <el-table-column prop="askDay" label="问询日期" show-overflow-tooltip width />
       <el-table-column prop="askTime" label="问询时间" show-overflow-tooltip width />
@@ -55,7 +56,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, defineAsyncComponent,onMounted } from 'vue'
+import { ref, reactive, defineAsyncComponent, onMounted } from 'vue'
 import MyTable from '/@/components/my-table/index.vue'
 import { auth, authAll } from '/@/utils/authFunction'
 import modal from '/@/globalProperties/modal'
@@ -89,7 +90,7 @@ const state = reactive({
   sels: [] as Array<BaseAskRuleDetailOutput>,
   baseAskRuleDetailListData: [] as Array<BaseAskRuleDetailOutput>,
 })
-onMounted(() => { 
+onMounted(() => {
   eventBus.off('refreshBaseAskRuleDetail')
   eventBus.on('refreshBaseAskRuleDetail', async () => {
     onQuery()

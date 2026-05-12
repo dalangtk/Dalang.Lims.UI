@@ -8,6 +8,7 @@ export interface BaseGroupQueryListInput {
  * 新增组别入参
  */
 export interface BaseGroupAddInput {
+  parentCode?: string | null
   groupCode?: string | null
   groupName?: string | null
   sort?: number | null
@@ -30,6 +31,7 @@ export interface BaseGroupOutput extends BaseGroupAddInput {
  * 获取组别列表返回
  */
 export interface BaseGroupListOutput extends BaseGroupOutput {
+  children?: BaseGroupOutput[]
   proId: number
   proName?: string | null
   proTime?: Date | null

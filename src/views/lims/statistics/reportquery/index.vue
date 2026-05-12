@@ -81,7 +81,7 @@
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :xs="24" :sm="24" :md="8" :lg="6">
+            <el-col :xs="24" :sm="24" :md="24" :lg="24">
               <el-form-item>
                 <el-button :icon="Search" type="primary" @click="handleQuery" :loading="state.queryLoading"> 查询 </el-button>
                 <el-button :icon="Refresh" @click="handleReset"> 重置 </el-button>

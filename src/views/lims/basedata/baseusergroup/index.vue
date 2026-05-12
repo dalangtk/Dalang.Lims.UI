@@ -3,9 +3,11 @@
     <el-splitter-panel size="30%">
       <MyTable
         ref="groupTableRef"
+        size="small"
         :data="state.groupList"
         highlight-current-row
         @current-change="groupChange"
+        row-key="id"
         :show-paging="false"
         :show-toolbox="false"
       >
@@ -14,7 +16,7 @@
       </MyTable>
     </el-splitter-panel>
     <el-splitter-panel :min="200">
-      <MyTable ref="userGroupTable" :data="state.userGroupList" highlight-current-row :show-paging="false" :show-toolbox="false">
+      <MyTable ref="userGroupTable" size="small" :data="state.userGroupList" highlight-current-row :show-paging="false" :show-toolbox="false">
         <template #headerButton>
           <div style="display: flex; flex-direction: row">
             <el-button v-if="auth(perms.add)" type="primary" size="small" @click="onAdd">
@@ -131,15 +133,15 @@
 </template>
 
 <script lang="ts" setup name="/basedata/baseusergroup">
-import { reactive, onMounted, ref, defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, onMounted, reactive, ref } from 'vue'
+import { UserGetPageOutput } from '/@/api/admin/data-contracts'
+import { BaseGroupApi } from '/@/api/lims/basedata/basegroup'
+import { BaseUserGroupApi } from '/@/api/lims/basedata/baseusergroup'
+import { BaseGroupListOutput, BaseGroupOutput } from '/@/api/lims/basedata/datacontract/group-datacontract'
+import { BaseUserGroupOutput } from '/@/api/lims/basedata/datacontract/usergroup-datacontract'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
-import { auth, auths, authAll } from '/@/utils/authFunction'
-import { BaseGroupApi } from '/@/api/lims/basedata/basegroup'
-import { BaseGroupOutput } from '/@/api/lims/basedata/datacontract/group-datacontract'
-import { BaseUserGroupApi } from '/@/api/lims/basedata/baseusergroup'
-import { BaseUserGroupAddInput, BaseUserGroupOutput } from '/@/api/lims/basedata/datacontract/usergroup-datacontract'
-import { UserGetOutput, UserGetPageOutput } from '/@/api/admin/data-contracts'
+import { auth, authAll } from '/@/utils/authFunction'
 const UserSelect = defineAsyncComponent(() => import('/@/views/admin/user/components/user-select.vue'))
 
 const groupTableRef = ref()
@@ -154,7 +156,7 @@ const perms = {
 const actionColWidth = authAll([perms.update, perms.delete]) || authAll([perms.update, perms.delete]) ? 135 : 70
 
 const state = reactive({
-  groupList: [] as BaseGroupOutput[],
+  groupList: [] as BaseGroupListOutput[],
   groupCode: '',
   userGroupList: [] as BaseUserGroupOutput[],
 })
@@ -175,6 +177,7 @@ onMounted(async () => {
 })
 
 const groupChange = (currentRow: BaseGroupOutput) => {
+  console.log(currentRow)
   state.groupCode = currentRow.groupCode!
   refreshUserGroup()
 }
@@ -206,6 +209,17 @@ const save = () => {
   })
 }
 
+const getGroupName = (groupCode: string): string => {
+  for (const group of state.groupList) {
+    if (group.groupCode == groupCode) return group.groupName || ''
+    if (group.children && group.children.length > 0) {
+      const child = group.children.find((c) => c.groupCode == groupCode)
+      if (child) return child.groupName || ''
+    }
+  }
+  return ''
+}
+
 const addUserGroup = (users: UserGetPageOutput[]) => {
   let addList = [] as BaseUserGroupOutput[]
   for (let index = 0; index < users.length; index++) {
@@ -214,7 +228,7 @@ const addUserGroup = (users: UserGetPageOutput[]) => {
       userId: u.id,
       name: u.name,
       groupCode: state.groupCode,
-      groupName: state.groupList.find((v) => v.groupCode == state.groupCode)?.groupName,
+      groupName: getGroupName(state.groupCode),
       canTest: 0,
       canFirstCheck: 0,
       canSecondCheck: 0,

@@ -25,6 +25,7 @@ export interface PurposeMatchAddInput {
   customerPurName?: string | null
   centralPurCode?: string | null
   centralPurName?: string | null
+  isCombo?: number
   sort?: number
   isValid?: boolean
 }

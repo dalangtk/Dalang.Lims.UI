@@ -2,7 +2,13 @@
   <div class="lis-layout" @mouseup="stopResize" @mousemove="onResize">
     <!-- 顶部 Header -->
     <header class="lis-header">
-      <AuditToolBar :show-mutil-audit="true"></AuditToolBar>
+      <AuditToolBar
+        :show-mutil-audit="true"
+        :wf-code="props.wfCode"
+        @save="handleSave"
+        @audit="handleAudit(props.resultType === 1 ? OperationTypeEnum.FirstCheck : OperationTypeEnum.SecondCheck, [])"
+        @selectTemplate="handleSelectTemplate"
+      ></AuditToolBar>
       <el-tag effect="dark" type="success">显示: {{ state.filteredList.length }} / 总量: {{ state.totalCount }}</el-tag>
     </header>
 
@@ -30,12 +36,15 @@
 
       <!-- 2. 中间：检验结果 -->
       <main class="panel-center">
-        <el-card shadow="never" class="result-card">
-          <component :is="pathologyInputComponent" style="flex: 1; height: 100%"></component>
+        <div class="result-card">
+          <Doctor ref="doctorRef"></Doctor>
+          <div style="height: 100%; overflow: scroll">
+            <component ref="pathologyInputRef" :is="pathologyInputComponent"></component>
+          </div>
           <el-collapse v-model="state.actived" expand-icon-position="left" accordion @change="moreTabVisableChange">
             <el-collapse-item title="更多" name="1" style="height: 100%; overflow-y: hidden">
               <tracktab
-                :mystyle="{ height: '300px' }"
+                :mystyle="{ height: '200px' }"
                 ref="moreTab"
                 :barcode="currentSample?.barcode"
                 :exam-info-id="currentSample?.id"
@@ -43,7 +52,7 @@
               ></tracktab>
             </el-collapse-item>
           </el-collapse>
-        </el-card>
+        </div>
       </main>
 
       <!-- Resizer Right -->
@@ -60,16 +69,17 @@
           :all-samples="state.allSamples"
           :filtered-list="state.filteredList"
           :active-id="activeId"
-          v-model:query-date-range="state.queryDateRange"
+          :query-date-range="state.queryDateRange"
           @update:all-samples="(value) => (state.allSamples = value)"
           @update:filtered-list="(value) => (state.filteredList = value)"
           @update:active-id="(value) => (activeId = value)"
           @switch-sample="switchSample"
           @query-sample-list="querySampleList"
+          @date-change="(value) => handleDateUpdate(value)"
         />
       </aside>
     </div>
-
+    <!-- @update:queryDateRange="handleDateUpdate" -->
     <PurposeSelect :group-code="state.groupCode" ref="purposeSelectRef" @confirm="confirmSelectItem"></PurposeSelect>
 
     <el-dialog v-model="state.delItemDialogShow">
@@ -122,6 +132,10 @@ import RptPreview from '/@/views/lims/exam/sampletest/components/reportpreview.v
 import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
 import tracktab from '/@/views/lims/exam/sampletest/components/tracktab.vue'
 import AuditToolBar from '/@/views/pathology/components/audittoolbar.vue'
+import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
+import { BasePathologyTemplateOutput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
+import { ExamSpecialResultListOutput, ExamSpecialResultOutput } from '/@/api/lims/shared/datacontract/examspecialresult-datacontract'
+import Doctor from '/@/views/pathology/components/doctor.vue'
 
 const props = defineProps({
   firstCheckComponent: {
@@ -140,6 +154,10 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  resultType: {
+    type: Number,
+    required: true,
+  },
 })
 
 const route = useRoute()
@@ -156,6 +174,7 @@ const purposeSelectRef = ref()
 const delItemSelectRef = ref()
 const previewRef = ref()
 const sampleListRef = ref()
+const pathologyInputRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -177,12 +196,13 @@ const state = reactive({
   ageUnitList: [] as DictGetListDto[] | null,
   sampleTypeList: [] as BaseSampleTypeOutput[],
   samplePropertyList: [] as DictGetListDto[] | null,
-  actived: '1',
+  actived: '-1',
   addOrRemoveItemInput: {} as AddOrDeletePurposeInput,
   delItemDialogShow: false,
   delItemDataList: [] as BasePurposeOutput[],
   historyResultShow: false,
   queryDateRange: [] as any,
+  currSpecialResultList: [] as ExamSpecialResultListOutput[],
 })
 const activeId = ref(-1)
 
@@ -255,11 +275,8 @@ const stopResize = () => {
 //#endregion 拖拽布局
 
 //#region 业务逻辑
-const groupChange = (value: String) => {
-  state.allSamples = []
-  state.filteredList = []
-  state.resultList = []
-  currentSample.value = null
+const handleDateUpdate = (value: any[]) => {
+  state.queryDateRange = value
 }
 const querySampleList = (examId?: number) => {
   var queryParam = {}
@@ -313,7 +330,29 @@ const querySampleList = (examId?: number) => {
     }
   })
 }
-
+const handleSelectTemplate = (templateList: BasePathologyTemplateOutput[]) => {
+  console.log(templateList)
+  if (templateList.length === 0) return
+  let content = templateList[0].templateContent
+  if (!content) return
+  pathologyInputRef.value.setResult(JSON.parse(content))
+}
+const handleSave = async () => {
+  if (pathologyInputRef.value && typeof pathologyInputRef.value.getResult === 'function') {
+    const result = await pathologyInputRef.value.getResult()
+    console.log(result)
+    if (result) {
+      state.currSpecialResultList.forEach((item) => {
+        item.fieldValue = result[item.fieldCode!]
+      })
+      new PathologyTestApi().saveSpecialResult(state.currSpecialResultList, { showErrorMessage: true }).then((res) => {
+        if (res.success) {
+          modal.msgSuccess('保存成功')
+        }
+      })
+    }
+  }
+}
 // const currentSample = computed(() => state.allSamples.find((i) => i.id === state.activeId))
 const currentSample = ref({} as ExamInfoOutput | null)
 
@@ -332,17 +371,38 @@ const switchSample = (row: ExamInfoOutput) => {
   activeId.value = row.id
   console.log('activeId', activeId.value)
   if (activeId.value > 0) {
-    new SampleTestApi().getResultList({ examInfoId: row.id }, { showErrorMessage: true }).then((res) => {
-      if (res.data) {
-        res.data.forEach((item) => {
-          item.isEditing = false
-          item.originalItemResult = item.itemResult
-        })
-      }
-      state.resultList = res.data!
-      console.log(state.resultList)
-    })
+    // new PathologyTestApi().getSpecialResultList({ examInfoId: row.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
+    //   if (res.data) {
+    //     state.currSpecialResultList = res.data
+    //     const result = res.data.reduce((acc: Record<string, any>, item) => {
+    //       acc[item.fieldCode!] = item.fieldValue
+    //       return acc
+    //     }, {})
+    //     pathologyInputRef.value.setResult(result)
+    //   }
+    // })
+    getSpecialResultList(row.id)
   }
+}
+
+const getSpecialResultList = (examId: number) => {
+  new PathologyTestApi().getSpecialResultList({ examInfoId: examId, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
+    if (res.data) {
+      state.currSpecialResultList = res.data
+      const result = res.data.reduce((acc: Record<string, any>, item) => {
+        acc[item.fieldCode!] = item.fieldValue
+        return acc
+      }, {})
+      pathologyInputRef.value.setResult(result)
+    }
+  })
+}
+
+const refreshSpecialResult = () => {
+  if (currentSample.value == null || currentSample.value.id == 0) {
+    return
+  }
+  getSpecialResultList(currentSample.value!.id)
 }
 /**
  * 操作
@@ -370,7 +430,7 @@ const handleOperation = (command: string | number | object) => {
  * 审核
  * @param type
  */
-const audit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
+const handleAudit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
   if (currentSample.value == null) return
   let param = {
     examInfoId: currentSample.value!.id,
@@ -388,7 +448,7 @@ const audit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
           let warningRules = res.data?.triggerRules.filter((item) => item.noticeType == 0)
           let warningRuleCodes = warningRules.map((item) => item.ruleCode!)
           modal.confirm('审核失败：' + warningRules.map((item) => item.noticeMessage).join('\n'), {}).then(() => {
-            audit(type, warningRuleCodes)
+            handleAudit(type, warningRuleCodes)
           })
         }
         return
@@ -608,12 +668,16 @@ const saveResult = (row: ExamResultOutput) => {
 const tableRowClassName = (row: ExamResultOutput) => (row.hlFlag === 'H' ? 'row-high' : row.hlFlag === 'L' ? 'row-low' : '')
 const getAbnormalClass = (s: string) => (s === 'H' ? 'input-high' : s === 'L' ? 'input-low' : '')
 const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L' ? 'text-low' : '')
+
+defineExpose({
+  refreshSpecialResult,
+})
 </script>
 
 <style lang="scss" scoped>
 /* 保持之前的 CSS 样式，增加 dot 样式 */
 .lis-layout {
-  height: 100%;
+  height: calc(100vh - 160px);
   display: flex;
   flex-direction: column;
   background: #f0f2f5;
@@ -629,7 +693,7 @@ const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L'
   padding: 0 15px;
   // margin-top: 10px;
   flex-shrink: 0;
-  z-index: 0;
+  //z-index: 0;
 }
 .brand {
   font-size: 18px;
@@ -656,6 +720,13 @@ const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L'
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
+  height: 100%;
+}
+.result-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   height: 100%;
 }

@@ -6,6 +6,7 @@
       class="my-table"
       :data="state.baseExamPlanDetailListData"
       ref="table"
+      size="small"
       :loading="state.loading"
       :show-paging="false"
       stripe

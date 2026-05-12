@@ -1,4 +1,4 @@
-<!-- <template>
+<template>
   <div style="height: 100%; overflow: hidden">
     <div id="designerContent"></div>
     <div class="viewer" id="viewerContent"></div>
@@ -36,7 +36,8 @@ const props = defineProps({
   },
 })
 
-const selectedReport = ref('SimpleList')
+// const selectedReport = ref('SimpleList')
+const selectedReport = ref('')
 let viewer: any = null
 let designer: any = null
 
@@ -93,28 +94,28 @@ const setReport = (reportObject: any) => {
     const report = new Stimulsoft.Report.StiReport()
     report.load(reportObject)
 
-    // report.dictionary.databases.clear()
-
-    // var dataSet = new Stimulsoft.System.Data.DataSet('Demo')
-    // dataSet.readJson(JSON.stringify(props.reportData))
-    // report.regData('Demo', 'Demo', dataSet)
-
-    // viewer.report = report
+    report.dictionary.databases.clear()
 
     var dataSet = new Stimulsoft.System.Data.DataSet('Demo')
-    // Load JSON data file from specified URL to the DataSet object
-    let obj = [
-      { barcode: '1', groupName: 'g1' },
-      { barcode: '2', groupName: 'g2' },
-    ]
-    dataSet.readJson(JSON.stringify(obj))
-    console.log('dataSet', dataSet)
-    // Remove all connections from the report template
-    report.dictionary.databases.clear()
-    // Register DataSet object
+    dataSet.readJson(JSON.stringify(props.reportData))
     report.regData('Demo', 'Demo', dataSet)
 
     viewer.report = report
+
+    // var dataSet = new Stimulsoft.System.Data.DataSet('Demo')
+    // // Load JSON data file from specified URL to the DataSet object
+    // let obj = [
+    //   { barcode: '1', groupName: 'g1' },
+    //   { barcode: '2', groupName: 'g2' },
+    // ]
+    // dataSet.readJson(JSON.stringify(obj))
+    // console.log('dataSet', dataSet)
+    // // Remove all connections from the report template
+    // report.dictionary.databases.clear()
+    // // Register DataSet object
+    // report.regData('Demo', 'Demo', dataSet)
+
+    // viewer.report = report
   }, 50)
 }
 
@@ -138,9 +139,12 @@ import chs from './localization/zh-CHS.xml?inline'
 onMounted(async () => {
   try {
     console.log('开始加载JS和CSS文件')
-    await loadCSS('/@/components/my-report/css/stimulsoft.viewer.office2013.whiteblue.css')
-    await loadJS('/@/components/my-report/js/stimulsoft.reports.js')
-    await loadJS('/@/components/my-report/js/stimulsoft.viewer.js')
+    // await loadCSS('/@/components/my-report/css/stimulsoft.viewer.office2013.whiteblue.css')
+    // await loadJS('/@/components/my-report/js/stimulsoft.reports.js')
+    // await loadJS('/@/components/my-report/js/stimulsoft.viewer.js')
+    await loadCSS('/components/my-report/css/stimulsoft.viewer.office2013.whiteblue.css')
+    await loadJS('/components/my-report/js/stimulsoft.reports.js')
+    await loadJS('/components/my-report/js/stimulsoft.viewer.js')
 
     console.log('JS和CSS文件加载完成')
   } catch (error: any) {
@@ -211,9 +215,9 @@ const loadJS = (jsPath: string) => {
   width: 100%;
   height: calc(100vh - 110px);
 }
-</style> -->
+</style>
 
-<template>
+<!-- <template>
   <div class="">
 
   </div>
@@ -224,4 +228,4 @@ import { reactive, ref } from 'vue';
 </script>
 
 <style scoped lang="scss">
-</style>
+</style> -->

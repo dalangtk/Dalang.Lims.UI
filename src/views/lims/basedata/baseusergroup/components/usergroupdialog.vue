@@ -8,7 +8,7 @@
     :close-on-press-escape="false"
     class="my-dialog-form"
   >
-    <MyTable ref="userGroupTable" :data="state.userGroupList" highlight-current-row :show-paging="false" :show-toolbox="false">
+    <MyTable ref="userGroupTable" :data="state.userGroupList" size="small" highlight-current-row :show-paging="false" :show-toolbox="false">
       <template #headerButton>
         <div style="display: flex; flex-direction: row">
           <el-button v-if="auth(perms.add)" type="primary" size="small" @click="onAdd">

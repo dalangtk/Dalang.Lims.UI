@@ -186,13 +186,13 @@ defineExpose({
 
 <style scoped>
 .tct-container {
-  background-color: #f5f7fa;
+  /* background-color: #f5f7fa; */
   height: 100%;
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding: 10px;
-  padding-top: 15px;
+  padding: 5px;
+  padding-top: 2px;
 }
 
 .result-form {
@@ -256,7 +256,6 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 12px; /* 可选：文本域之间的间距 */
-  padding: 8px; /* 可选：整体内边距 */
   box-sizing: border-box;
 }
 

@@ -12,6 +12,13 @@
       <el-form ref="formRef" :model="form" size="default" label-width="auto">
         <el-row :gutter="35">
           <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
+            <el-form-item label="父组别" prop="parentCode">
+              <el-select v-model="form.parentCode" filterable clearable>
+                <el-option v-for="item in state.groupList" :key="item.groupCode" :label="item.groupName" :value="item.groupCode"> </el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :xs="24" :sm="24" :md="24" :lg="24" :xl="24">
             <el-form-item label="组别代码" prop="groupCode" :rules="[{ required: true, message: '请输入组别代码', trigger: ['blur', 'change'] }]">
               <el-input v-model="form.groupCode" clearable :disabled="form.id > 0" />
             </el-form-item>
@@ -44,8 +51,8 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, toRefs, ref } from 'vue'
-import { BaseGroupAddInput, BaseGroupUpdateInput } from '/@/api/lims/basedata/datacontract/group-datacontract'
+import { reactive, toRefs, ref, onMounted } from 'vue'
+import { BaseGroupAddInput, BaseGroupOutput, BaseGroupUpdateInput } from '/@/api/lims/basedata/datacontract/group-datacontract'
 import { BaseGroupApi } from '/@/api/lims/basedata/basegroup'
 import eventBus from '/@/utils/mitt'
 import modal from '/@/globalProperties/modal'
@@ -61,10 +68,21 @@ const formRef = ref()
 const state = reactive({
   showDialog: false,
   sureLoading: false,
+  groupList: [] as BaseGroupOutput[],
   form: {} as BaseGroupAddInput | BaseGroupUpdateInput | any,
 })
 const { form } = toRefs(state)
 
+onMounted(async () => {
+  await new BaseGroupApi()
+    .getAll()
+    .then((res) => {
+      state.groupList = res!.data!
+    })
+    .catch((e) => {
+      modal.msgError(e)
+    })
+})
 // 打开对话框
 const open = async (row: any = {}) => {
   if (row.id > 0) {
@@ -83,6 +101,7 @@ const open = async (row: any = {}) => {
 
 const defaultToAdd = (): BaseGroupAddInput => {
   return {
+    parentCode: '',
     groupCode: '',
     groupName: '',
     sort: 0,

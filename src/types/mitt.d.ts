@@ -80,6 +80,7 @@ declare type MittType<T = any> = {
   refreshBaseTenantReportExtend: ?T
 
   refreshBasePathologyTemplate: ?T
+  refreshBasePathologySetting: ?T
 }
 
 // mitt 参数类型定义
