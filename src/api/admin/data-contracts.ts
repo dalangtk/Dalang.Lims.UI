@@ -4905,3 +4905,8 @@ export interface LabelValueOutput {
   label: string | null
   value: string | boolean | null
 }
+export interface UserGetOptionOutput {
+  id: number
+  userName: string | null
+  name: string | null
+}

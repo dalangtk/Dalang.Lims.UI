@@ -1,6 +1,6 @@
 <template>
   <div class="tct-container">
-    <el-form :model="state.formData" class="result-form" label-position="left" label-width="150px" size="small">
+    <el-form :model="state.formData" class="result-form" label-position="left" label-width="150px" size="small" :disabled="!state.editable">
       <el-row :gutter="10" class="h100">
         <!-- 左侧栏：标本情况与微生物选项 -->
         <el-col :span="10">
@@ -124,12 +124,16 @@ const props = withDefaults(
 
 const state = reactive({
   formData: {} as TctResult,
+  editable: true,
 })
 
 const getResult = () => {
   return state.formData
 }
-
+const setEditable = (editable: boolean) => {
+  state.editable = editable
+  console.log('setEditable:', editable)
+}
 const setResult = (result: any) => {
   console.log('设置结果:', result)
   state.formData = {
@@ -181,6 +185,7 @@ const defaultToAdd = () => {
 defineExpose({
   getResult,
   setResult,
+  setEditable
 })
 </script>
 

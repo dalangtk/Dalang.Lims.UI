@@ -7,6 +7,7 @@
         :wf-code="props.wfCode"
         @save="handleSave"
         @audit="handleAudit(props.resultType === 1 ? OperationTypeEnum.FirstCheck : OperationTypeEnum.SecondCheck, [])"
+        @unAudit="handleUnAudit"
         @selectTemplate="handleSelectTemplate"
       ></AuditToolBar>
       <el-tag effect="dark" type="success">显示: {{ state.filteredList.length }} / 总量: {{ state.totalCount }}</el-tag>
@@ -37,7 +38,7 @@
       <!-- 2. 中间：检验结果 -->
       <main class="panel-center">
         <div class="result-card">
-          <Doctor ref="doctorRef"></Doctor>
+          <Doctor :wf-code="props.wfCode" :result-type="props.resultType" ref="doctorRef"></Doctor>
           <div style="height: 100%; overflow: scroll">
             <component ref="pathologyInputRef" :is="pathologyInputComponent"></component>
           </div>
@@ -117,7 +118,7 @@ import { BasePurposeOutput, PurposeAndComboOutput } from '/@/api/lims/basedata/d
 import { BaseSampleTypeOutput } from '/@/api/lims/basedata/datacontract/sampletype-datacontract'
 import { AddOrDeletePurposeInput, AuditInput, CancelTestInput, UnAuditInput } from '/@/api/lims/exam/datacontract/sampletest-datacontract'
 import { SampleTestApi } from '/@/api/lims/exam/sampletest'
-import { PathologyExamListQueryInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
+import { PathologyDoctor, PathologyExamListQueryInput, SaveResultInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { ExamInfoOutput, ExamListQueryInput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 import { ExamResultOutput } from '/@/api/lims/shared/datacontract/examresult-datacontract'
 import { ExecuteTypeEnum, OperationTypeEnum } from '/@/api/lims/shared/enums/operationtypeenum'
@@ -175,6 +176,7 @@ const delItemSelectRef = ref()
 const previewRef = ref()
 const sampleListRef = ref()
 const pathologyInputRef = ref()
+const doctorRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -293,7 +295,6 @@ const querySampleList = (examId?: number) => {
       endDate: state.queryDateRange[1],
     } as PathologyExamListQueryInput
   }
-  console.log(queryParam)
   new SampleTestApi().getSampleList(queryParam, { showErrorMessage: true }).then((res) => {
     if (res.data && res.data.length > 0) {
       res.data.forEach((item) => {
@@ -316,11 +317,9 @@ const querySampleList = (examId?: number) => {
         nextTick(() => {
           sampleListRef.value.expandList()
         })
-        console.log('state.filteredList', state.filteredList)
         switchSample(state.allSamples[0])
       }
     } else {
-      console.log('no data')
       state.allSamples = []
       state.totalCount = 0
       activeId.value = -1
@@ -331,21 +330,31 @@ const querySampleList = (examId?: number) => {
   })
 }
 const handleSelectTemplate = (templateList: BasePathologyTemplateOutput[]) => {
-  console.log(templateList)
   if (templateList.length === 0) return
   let content = templateList[0].templateContent
   if (!content) return
   pathologyInputRef.value.setResult(JSON.parse(content))
 }
 const handleSave = async () => {
+  var doctor = doctorRef.value.getDoctor() as PathologyDoctor
+  if (doctor.reportTime) {
+    let time = formatDate(parseDate(doctor.reportTime!), 'YYYY-mm-dd HH:MM:SS')
+    doctor.reportTime = time
+  }
+  let param = {
+    examInfoId: currentSample.value!.id,
+    doctor: doctor,
+    resultType: props.resultType,
+  } as SaveResultInput
+
   if (pathologyInputRef.value && typeof pathologyInputRef.value.getResult === 'function') {
     const result = await pathologyInputRef.value.getResult()
-    console.log(result)
     if (result) {
       state.currSpecialResultList.forEach((item) => {
         item.fieldValue = result[item.fieldCode!]
       })
-      new PathologyTestApi().saveSpecialResult(state.currSpecialResultList, { showErrorMessage: true }).then((res) => {
+      param.specialResultList = state.currSpecialResultList
+      new PathologyTestApi().saveResult(param, { showErrorMessage: true }).then((res) => {
         if (res.success) {
           modal.msgSuccess('保存成功')
         }
@@ -364,13 +373,16 @@ watch(activeId, (newValue) => {
       moreTab.value.refreshSelectedTab()
     })
   } else currentSample.value = null
-  console.log('currentSample', currentSample.value)
 })
 
 const switchSample = (row: ExamInfoOutput) => {
-  activeId.value = row.id
-  console.log('activeId', activeId.value)
-  if (activeId.value > 0) {
+  if (row.id > 0) {
+    let curr = state.allSamples.find((i) => i.id === row.id)
+    if (curr && activeId.value == row.id) {
+      currentSample.value = curr
+    }
+    activeId.value = row.id
+
     // new PathologyTestApi().getSpecialResultList({ examInfoId: row.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
     //   if (res.data) {
     //     state.currSpecialResultList = res.data
@@ -381,7 +393,14 @@ const switchSample = (row: ExamInfoOutput) => {
     //     pathologyInputRef.value.setResult(result)
     //   }
     // })
-    getSpecialResultList(row.id)
+    nextTick(() => {
+      var editable =
+        currentSample.value?.sampleStatus == SampleStatus.Testing ||
+        (props.resultType == 2 && currentSample.value?.sampleStatus == SampleStatus.FirstCheck)
+      getSpecialResultList(row.id)
+      doctorRef.value.setData(row)
+      pathologyInputRef.value.setEditable(editable)
+    })
   }
 }
 
@@ -398,8 +417,8 @@ const getSpecialResultList = (examId: number) => {
   })
 }
 
-const refreshSpecialResult = () => {
-  if (currentSample.value == null || currentSample.value.id == 0) {
+const refreshData = () => {
+  if (currentSample.value == null || !currentSample.value.id) {
     return
   }
   getSpecialResultList(currentSample.value!.id)
@@ -408,8 +427,7 @@ const refreshSpecialResult = () => {
  * 操作
  */
 const handleOperation = (command: string | number | object) => {
-  console.log(command)
-  if (currentSample.value == null || currentSample.value.id == 0) {
+  if (currentSample.value == null || !currentSample.value.id) {
     return
   }
   if (command === 'RefreshItemInfo') {
@@ -438,7 +456,7 @@ const handleAudit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
     executeType: ExecuteTypeEnum.Single,
     ignoreAuditRuleCodes: ignoreRuleCodes,
   } as AuditInput
-  new SampleTestApi().audit(param).then((res) => {
+  new PathologyTestApi().pathologyAudit(param).then((res) => {
     if (res.success) {
       if (res.data?.triggerRules != null && res.data?.triggerRules.length > 0) {
         if (res.data?.triggerRules.some((item) => item.noticeType == 1)) {
@@ -469,6 +487,7 @@ const handleAudit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
           cur!.secondAuditTime = exam?.secondAuditTime
           cur!.secondAuditAuthorizedId = exam?.secondAuditAuthorizedId
         }
+        switchSample(cur!)
       }
       modal.msgSuccess('审核成功')
     }
@@ -477,38 +496,47 @@ const handleAudit = (type: OperationTypeEnum, ignoreRuleCodes?: string[]) => {
 /**
  * 反审核
  */
-const unAudit = () => {
+const handleUnAudit = async () => {
   if (currentSample.value == null) return
 
-  modal.prompt('请输入反审核原因', null).then(({ value }) => {
-    let param = {
-      examInfoId: currentSample.value!.id,
-      reasonCode: '1001',
-      reasonContent: value,
-      executeType: ExecuteTypeEnum.Single,
-    } as UnAuditInput
+  let reason = ''
+  if (props.resultType == 2) {
+    try {
+      let { value } = await modal.prompt('请输入反审核原因', null)
+      reason = value
+    } catch (e) {
+      reason = ''
+    }
+    if (!reason) return
+  }
+  let param = {
+    examInfoId: currentSample.value!.id,
+    reasonCode: '1001',
+    reasonContent: reason,
+    executeType: ExecuteTypeEnum.Single,
+  } as UnAuditInput
 
-    new SampleTestApi().unAudit(param).then((res) => {
-      if (res.success) {
-        let cur = state.allSamples.find((item) => item.id == currentSample.value!.id)
-        if (cur) {
-          cur!.sampleStatus = res.data?.sampleStatus
-          cur!.sampleStatusName = res.data?.sampleStatusName
-          cur!.firstAuditId = res.data?.firstAuditId
-          cur!.firstAuditName = res.data?.firstAuditName
-          cur!.firstAuditTime = res.data?.firstAuditTime
-          cur!.firstAuditAuthorizedId = res.data?.firstAuditAuthorizedId
-          cur!.secondAuditId = res.data?.secondAuditId
-          cur!.secondAuditName = res.data?.secondAuditName
-          cur!.secondAuditTime = res.data?.secondAuditTime
-          cur!.secondAuditAuthorizedId = res.data?.secondAuditAuthorizedId
-          cur!.printReportTime = res.data?.printReportTime
-          cur!.downloadFlag = res.data?.downloadFlag
-          cur!.createReportTime = res.data?.createReportTime
-        }
-        modal.msgSuccess('反审核成功')
+  new PathologyTestApi().unAudit(param).then((res) => {
+    if (res.success) {
+      let cur = state.allSamples.find((item) => item.id == currentSample.value!.id)
+      if (cur) {
+        cur!.sampleStatus = res.data?.sampleStatus
+        cur!.sampleStatusName = res.data?.sampleStatusName
+        cur!.firstAuditId = res.data?.firstAuditId
+        cur!.firstAuditName = res.data?.firstAuditName
+        cur!.firstAuditTime = res.data?.firstAuditTime
+        cur!.firstAuditAuthorizedId = res.data?.firstAuditAuthorizedId
+        cur!.secondAuditId = res.data?.secondAuditId
+        cur!.secondAuditName = res.data?.secondAuditName
+        cur!.secondAuditTime = res.data?.secondAuditTime
+        cur!.secondAuditAuthorizedId = res.data?.secondAuditAuthorizedId
+        cur!.printReportTime = res.data?.printReportTime
+        cur!.downloadFlag = res.data?.downloadFlag
+        cur!.createReportTime = res.data?.createReportTime
       }
-    })
+      switchSample(cur!)
+      modal.msgSuccess('反审核成功')
+    }
   })
 }
 
@@ -524,7 +552,6 @@ const addItem = () => {
   // return
 
   if (activeId.value < 0) return
-  console.log('purposeSelectRef', purposeSelectRef.value)
   purposeSelectRef.value.open(currentSample.value!.customerCode, '')
 }
 const confirmSelectItem = (selectItems: PurposeAndComboOutput[]) => {
@@ -554,19 +581,16 @@ const confirmSelectItem = (selectItems: PurposeAndComboOutput[]) => {
  * 退项
  */
 const deleteItem = () => {
-  console.log('resultList.length', state.resultList.length)
   if (activeId.value < 0) return
   if (state.resultList.length <= 0) return
 
   state.delItemDataList = Array.from(
     new Map(state.resultList.map((item) => [item.purCode, { purCode: item.purCode, purName: item.purName } as BasePurposeOutput])).values()
   )
-  console.log('state.delItemDataList', state.delItemDataList)
   state.delItemDialogShow = true
 }
 const onConfirmSelectDelItem = () => {
   let selectItems = (delItemSelectRef.value.getSelectionRows() ?? []) as BasePurposeOutput[]
-  console.log('selectItems', selectItems)
   state.delItemDialogShow = false
   if (selectItems.length <= 0) return
   new SampleTestApi().backItem({ examInfoId: currentSample.value!.id, purCodes: selectItems.map((v) => v.purCode!) }).then((res) => {
@@ -616,61 +640,17 @@ const cancelTest = () => {
 
 const moreTabVisableChange = (tabName: string) => {
   if (tabName) {
-    console.log('tabName', tabName)
     moreTab.value.refreshSelectedTab()
   }
 }
 //#endregion 业务逻辑
 
-//#region 检验结果编辑
-const vFocus = { mounted: (el: any) => el.querySelector('input')?.focus() }
-const startEdit = (row: ExamResultOutput) => {
-  console.log('currentSample', currentSample.value)
-  if (
-    currentSample.value?.sampleStatus != SampleStatus.Testing.toString() &&
-    currentSample.value?.sampleStatus != SampleStatus.ReportDelay.toString()
-  )
-    return
-  row.isEditing = true
-}
-const finishEdit = (row: ExamResultOutput) => {
-  console.log('row', row)
-  row.isEditing = false
-  if (row.itemResult !== row.originalItemResult) saveResult(row)
-}
-
-const saveResult = (row: ExamResultOutput) => {
-  new SampleTestApi().saveItemResult(row).then((res) => {
-    if (res.success) {
-      state.resultList.forEach((v) => {
-        if (v.id == row.id) {
-          v.hlFlag = res.data?.hlFlag
-          v.itemResult = res.data?.itemResult
-          v.originalItemResult = res.data?.itemResult
-          console.log('v', v)
-          if (v.isCriticalValue) {
-            state.allSamples.find((x) => x.id == v.examInfoId)!.hasCritical = true
-          }
-        }
-      })
-      modal.msgSuccess('保存成功')
-    }
-  })
-}
-
-//#endregion 检验结果编辑
-
 //#region 基础信息编辑
 // 基础信息编辑逻辑已移至 PatientInfo 组件
 //#endregion 基础信息编辑
 
-// 样式辅助
-const tableRowClassName = (row: ExamResultOutput) => (row.hlFlag === 'H' ? 'row-high' : row.hlFlag === 'L' ? 'row-low' : '')
-const getAbnormalClass = (s: string) => (s === 'H' ? 'input-high' : s === 'L' ? 'input-low' : '')
-const getAbnormalTextClass = (s: string) => (s === 'H' ? 'text-high' : s === 'L' ? 'text-low' : '')
-
 defineExpose({
-  refreshSpecialResult,
+  refreshData,
 })
 </script>
 

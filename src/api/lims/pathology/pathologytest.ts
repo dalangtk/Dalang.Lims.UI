@@ -1,6 +1,8 @@
+import { UserGetOptionOutput } from '../../admin/data-contracts'
+import { AuditInput, AuditResultDto, UnAuditInput } from '../exam/datacontract/sampletest-datacontract'
 import { ExamInfoOutput } from '../shared/datacontract/examinfo-datacontract'
 import { ExamSpecialResultListOutput, ExamSpecialResultQueryListInput } from '../shared/datacontract/examspecialresult-datacontract'
-import { PathologyBackInput, PathologyExamListQueryInput, PathologyReceiveInput } from './datacontract/pathologytest-datacontract'
+import { PathologyBackInput, PathologyExamListQueryInput, PathologyReceiveInput, SaveResultInput } from './datacontract/pathologytest-datacontract'
 import { ContentType, HttpClient, RequestParams } from '/@/api/admin/http-client'
 import { ResultBaseOutput } from '/@/api/lims/basedata/datacontract/base'
 
@@ -85,18 +87,80 @@ export class PathologyTestApi<SecurityDataType = unknown> extends HttpClient<Sec
    * No description
    *
    * @tags pathology
-   * @name saveSpecialResult
-   * @summary 保存特检结果列表
-   * @request POST:/api/pathology/save-special-result
+   * @name saveResult
+   * @summary 保存结果
+   * @request POST:/api/pathology/save-result
    * @secure
    */
-  saveSpecialResult = (data: ExamSpecialResultListOutput[], params: RequestParams = {}) =>
+  saveResult = (data: SaveResultInput, params: RequestParams = {}) =>
     this.request<ResultBaseOutput<boolean>, any>({
-      path: `/api/pathology/pathology-test/save-special-result`,
+      path: `/api/pathology/pathology-test/save-result`,
       method: 'POST',
       body: data,
       secure: true,
       type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name pathologyAudit
+   * @summary 病理审核
+   * @request POST:/api/pathology/pathology-test/pathology-audit
+   * @secure
+   */
+  pathologyAudit = (data: AuditInput, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<AuditResultDto>, any>({
+      path: `/api/pathology/pathology-test/pathology-audit`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags exam
+   * @name unAudit
+   * @summary 反审核
+   * @request POST:/api/exam/sample-test/audit
+   * @secure
+   */
+  unAudit = (data: UnAuditInput, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<ExamInfoOutput>, any>({
+      path: `/api/exam/sample-test/un-audit`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name getPathologySecondAuditUsers
+   * @summary 获取病理复诊医生
+   * @request GET:/api/pathology/pathology-test/get-pathology-second-audit-users
+   * @secure
+   */
+  getPathologySecondAuditUsers = (
+    query?: {
+      /** @format string */
+      wfCode?: string
+    },
+    params: RequestParams = {}
+  ) =>
+    this.request<ResultBaseOutput<Array<UserGetOptionOutput>>, any>({
+      path: `/api/pathology/pathology-test/get-pathology-second-audit-users`,
+      method: 'GET',
+      query: query,
+      secure: true,
       format: 'json',
       ...params,
     })

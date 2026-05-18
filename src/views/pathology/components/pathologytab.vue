@@ -79,11 +79,11 @@ const secondCheckRef = ref()
 const handleClick = (tab: TabsPaneContext, event: Event) => {
   console.log(activeName.value)
   if (activeName.value === 'GiantInspection') {
-    giantInspectionRef.value?.refreshSpecialResult()
+    giantInspectionRef.value?.refreshData()
   } else if (activeName.value === 'FirstCheck') {
-    firstCheckRef.value?.refreshSpecialResult()
+    firstCheckRef.value?.refreshData()
   } else if (activeName.value === 'SecondCheck') {
-    secondCheckRef.value?.refreshSpecialResult()
+    secondCheckRef.value?.refreshData()
   }
 }
 </script>

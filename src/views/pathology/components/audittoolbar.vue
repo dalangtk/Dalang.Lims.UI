@@ -56,6 +56,7 @@ const emit = defineEmits<{
   (e: 'save'): void
   (e: 'preview'): void
   (e: 'audit'): void
+  (e: 'unAudit'): void
 }>()
 
 const mySelectTableRef = ref()
@@ -88,11 +89,12 @@ const handlePreview = () => {
   emit('preview')
 }
 const handleAudit = () => {
-  modal.msgWarning('病理审核功能开发中...')
+  // modal.msgWarning('病理审核功能开发中...')
   emit('audit')
 }
 const handleUnAudit = () => {
-  modal.msgWarning('病理反审核审核功能开发中...')
+  // modal.msgWarning('病理反审核审核功能开发中...')
+  emit('unAudit')
 }
 </script>
 

@@ -8,6 +8,7 @@ import {
   BasePathologySettingQueryListInput,
 } from './datacontract/pathologysetting-datacontract'
 import { ResultBaseOutput, ResultBasePageOutput, GetPageInput } from '/@/api/lims/basedata/datacontract/base'
+import { LabelValueOutput } from '../../admin/data-contracts'
 
 export class BasePathologySettingApi<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -152,5 +153,21 @@ export class BasePathologySettingApi<SecurityDataType = unknown> extends HttpCli
       secure: true,
       format: 'json',
       ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags Pathology
+   * @name Get
+   * @summary 查询病理工作流
+   * @request GET:/api/pathology/base-pathology-setting/get-pathology-wf-codes
+   * @secure
+   */
+  getPathologyWfCodes = () =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/pathology/base-pathology-setting/get-pathology-wf-codes`,
+      method: 'GET',
+      secure: true,
+      format: 'json',
     })
 }

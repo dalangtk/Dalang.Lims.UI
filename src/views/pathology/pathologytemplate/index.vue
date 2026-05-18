@@ -56,22 +56,20 @@
   </div>
 </template>
 
-<script lang="ts" setup name="pathology/basepathologytemplate">
-import { ref, reactive, onMounted, getCurrentInstance, onBeforeMount, defineAsyncComponent, computed } from 'vue'
-import TableSearch from '/@/components/my-table/MyTableSearch.vue'
-import MyTable from '/@/components/my-table/index.vue'
+<script lang="ts" setup name="/pathology/pathologytemplate">
+import { defineAsyncComponent, getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
 import {
   BasePathologyTemplateOutput,
-  BasePathologyTemplateListOutput,
-  BasePathologyTemplateQueryListInput,
+  BasePathologyTemplateQueryListInput
 } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
+import TableSearch from '/@/components/my-table/MyTableSearch.vue'
+import MyTable from '/@/components/my-table/index.vue'
 
 import { BasePathologyTemplateApi } from '/@/api/lims/pathology/pathologytemplate'
-import eventBus from '/@/utils/mitt'
-import { auth, auths, authAll } from '/@/utils/authFunction'
-import { LabelValueOutput } from '/@/api/admin/data-contracts'
 import modal from '/@/globalProperties/modal'
+import { auth, authAll } from '/@/utils/authFunction'
+import eventBus from '/@/utils/mitt'
 
 // 引入组件
 const BasePathologyTemplateForm = defineAsyncComponent(() => import('./components/base-pathology-template-form.vue'))

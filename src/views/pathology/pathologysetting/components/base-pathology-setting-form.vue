@@ -13,7 +13,9 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="工作流" prop="wfCode" v-show="editItemIsShow(true, true)">
-              <el-input v-model="state.form.wfCode" placeholder="工作流"> </el-input>
+              <el-select v-model="state.form.wfCode" placeholder="工作流" filterable remote clearable>
+                <el-option v-for="item in state.wfOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -77,14 +79,14 @@
 </template>
 
 <script lang="ts" setup name="lims/base-pathology-setting/form">
-import { getCurrentInstance, reactive, ref, toRefs, onMounted } from 'vue'
+import { getCurrentInstance, onMounted, reactive, ref, toRefs } from 'vue'
 import { BasePathologySettingAddInput, BasePathologySettingUpdateInput } from '/@/api/lims/pathology/datacontract/pathologysetting-datacontract'
 import { BasePathologySettingApi } from '/@/api/lims/pathology/pathologysetting'
 import { BaseOptionsApi } from '/@/api/lims/shared/options'
 
+import { LabelValueOutput } from '/@/api/admin/data-contracts'
 import { makePy, makeWb } from '/@/utils/cuscode'
 import eventBus from '/@/utils/mitt'
-import { LabelValueOutput } from '/@/api/admin/data-contracts'
 
 defineProps({
   title: {
@@ -101,10 +103,16 @@ const state = reactive({
   sureLoading: false,
   form: {} as BasePathologySettingAddInput | BasePathologySettingUpdateInput | any,
   userOptions: [] as LabelValueOutput[],
+  wfOptions: [] as LabelValueOutput[],
 })
-const { userOptions } = toRefs(state)
+const { userOptions, wfOptions } = toRefs(state)
 const { form } = toRefs(state)
 
+onMounted(() => {
+  new BasePathologySettingApi().getPathologyWfCodes().then((res) => {
+    state.wfOptions = res.data ?? []
+  })
+})
 const queryUser = async (query: string) => {
   if (!query) return
   await new BaseOptionsApi().getUserOptions({ currentPage: 1, pageSize: 20, filter: query }).then((res) => {

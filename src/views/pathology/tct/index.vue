@@ -7,7 +7,7 @@
   ></PathologyTab>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup name="/pathology/tct">
 import { reactive, ref } from 'vue'
 import PathologyList from '/@/views/pathology/components/pathologylist.vue'
 import TCTInput from '/@/views/pathology/tct/components/tctinput.vue'
