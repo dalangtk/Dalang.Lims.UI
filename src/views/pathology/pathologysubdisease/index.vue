@@ -1,16 +1,13 @@
-<template>
-  <div class="my-flex-column w100 h100">
+﻿<template>
+  <div class="my-layout my-container">
     <TableSearch :search="state.search" @search="onSearch" />
     <MyTable
       border
       tableName="baseGroup"
       class="my-table"
-      size="small"
-      :data="state.basePathologySamplingSpotListData"
+      :data="state.basePathologySubDiseaseListData"
       ref="table"
       :total="state.total"
-      highlight-current-row
-      @current-change="currentRowChange"
       v-on:pageOrSizeChange="onTablePageOrSizeChange"
       :loading="state.loading"
       stripe
@@ -21,10 +18,13 @@
           新增</el-button
         >
       </template>
-      <el-table-column prop="samplingSpotCode" label="部位代码" show-overflow-tooltip width />
-      <el-table-column prop="samplingSpotName" label="部位名称" show-overflow-tooltip width />
-      <el-table-column prop="gender" label="性别" show-overflow-tooltip width />
-      <el-table-column prop="pinYin" label="拼音" show-overflow-tooltip width />
+      <el-table-column prop="subDiseaseCode" label="子疾病代码" show-overflow-tooltip width />
+      <el-table-column prop="subDiseaseName" label="子疾病名称" show-overflow-tooltip width />
+      <el-table-column prop="explainUrl" label="描述外链" show-overflow-tooltip width >
+        <template #default="{ row }">
+          <el-link :href="row.explainUrl" target="_blank" type="primary">{{ row.explainUrl }}</el-link>
+        </template>
+      </el-table-column>
       <el-table-column prop="sort" label="排序" show-overflow-tooltip width />
       <el-table-column prop="isValid" label="状态" min-width="100">
         <template #default="{ row }">
@@ -41,67 +41,68 @@
       </el-table-column>
     </MyTable>
 
-    <pathology-sampling-spot-form ref="pathologySamplingSpotFormRef" :title="state.pathologySamplingSpotFormTitle"></pathology-sampling-spot-form>
+    <base-pathology-sub-disease-form
+      ref="basePathologySubDiseaseFormRef"
+      :title="state.basePathologySubDiseaseFormTitle"
+    ></base-pathology-sub-disease-form>
   </div>
 </template>
 
-<script lang="ts" setup>
+<script lang="ts" setup name="pathology/subdisease">
 import { defineAsyncComponent, getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
 import {
-  BasePathologySamplingSpotOutput,
-  BasePathologySamplingSpotQueryListInput,
-} from '/@/api/lims/pathology/datacontract/pathologysamplingspot-datacontract'
+  BasePathologySubDiseaseOutput,
+  BasePathologySubDiseaseQueryListInput
+} from '/@/api/lims/pathology/datacontract/pathologysubdisease-datacontract'
 import TableSearch from '/@/components/my-table/MyTableSearch.vue'
 import MyTable from '/@/components/my-table/index.vue'
-import { BasePathologySamplingSpotApi } from '/@/api/lims/pathology/pathologysamplingspot'
+
+import { BasePathologySubDiseaseApi } from '/@/api/lims/pathology/pathologysubdisease'
 import { auth, authAll } from '/@/utils/authFunction'
 import eventBus from '/@/utils/mitt'
 
 // 引入组件
-const PathologySamplingSpotForm = defineAsyncComponent(() => import('./pathology-sampling-spot-form.vue'))
+const BasePathologySubDiseaseForm = defineAsyncComponent(() => import('./components/base-pathology-sub-disease-form.vue'))
 
 const { proxy } = getCurrentInstance() as any
 var table = ref()
-const pathologySamplingSpotFormRef = ref()
+const basePathologySubDiseaseFormRef = ref()
 
 //权限配置
 const perms = {
-  add: 'api:lims:base-pathology-sampling-spot:add',
-  update: 'api:lims:base-pathology-sampling-spot:update',
-  delete: 'api:lims:base-pathology-sampling-spot:delete',
-  batDelete: 'api:lims:base-pathology-sampling-spot:batch-delete',
+  add: 'api:lims:base-pathology-sub-disease:add',
+  update: 'api:lims:base-pathology-sub-disease:update',
+  delete: 'api:lims:base-pathology-sub-disease:delete',
 }
 
 const actionColWidth = authAll([perms.update, perms.delete]) ? 135 : 70
-const emit = defineEmits(['onCurrRowChange'])
 
 const state = reactive({
   loading: false,
-  pathologySamplingSpotFormTitle: '',
+  basePathologySubDiseaseFormTitle: '',
   total: 0,
-  search: [{ label: '搜索', prop: 'samplingSpotName', placeholder: '', required: false, type: 'input' }],
-  sels: [] as Array<BasePathologySamplingSpotOutput>,
-  filter: {
-    samplingSpotName: null,
-  } as BasePathologySamplingSpotQueryListInput,
+  search: [],
+  sels: [] as Array<BasePathologySubDiseaseOutput>,
+  filter: {} as BasePathologySubDiseaseQueryListInput,
   pageInput: {
     currentPage: 1,
     pageSize: 20,
     filter: {},
-  } as GetPageInput<BasePathologySamplingSpotQueryListInput>,
-  basePathologySamplingSpotListData: [] as Array<BasePathologySamplingSpotOutput>,
+  } as GetPageInput<BasePathologySubDiseaseQueryListInput>,
+  basePathologySubDiseaseListData: [] as Array<BasePathologySubDiseaseOutput>,
 })
 
 onMounted(() => {
   onQuery()
-  eventBus.off('refreshPathologySamplingSpot')
-  eventBus.on('refreshPathologySamplingSpot', async () => {
+  eventBus.off('refreshPathologySubDisease')
+  eventBus.on('refreshPathologySubDisease', async () => {
     onQuery()
   })
 })
+
 onBeforeMount(() => {
-  eventBus.off('refreshPathologySamplingSpot')
+  eventBus.off('refreshPathologySubDisease')
 })
 
 const onSearch = (data: EmptyObjectType) => {
@@ -112,48 +113,42 @@ const onSearch = (data: EmptyObjectType) => {
 const onQuery = async () => {
   state.loading = true
   //state.pageInput.filter = state.filter
-  const res = await new BasePathologySamplingSpotApi().getPage(state.pageInput).catch(() => {
+  const res = await new BasePathologySubDiseaseApi().getPage(state.pageInput).catch(() => {
     state.loading = false
   })
 
-  state.basePathologySamplingSpotListData = res?.data?.list ?? []
+  state.basePathologySubDiseaseListData = res?.data?.list ?? []
   state.total = res?.data?.total ?? 0
   state.loading = false
 }
 
 const onAdd = () => {
-  state.pathologySamplingSpotFormTitle = '新增取材部位'
-  pathologySamplingSpotFormRef.value.open()
+  state.basePathologySubDiseaseFormTitle = '新增子疾病'
+  basePathologySubDiseaseFormRef.value.open()
 }
 
-const onEdit = (row: BasePathologySamplingSpotOutput) => {
-  state.pathologySamplingSpotFormTitle = '编辑取材部位'
-  pathologySamplingSpotFormRef.value.open(row)
+const onEdit = (row: BasePathologySubDiseaseOutput) => {
+  state.basePathologySubDiseaseFormTitle = '编辑子疾病'
+  basePathologySubDiseaseFormRef.value.open(row)
 }
 
-const onDelete = (row: BasePathologySamplingSpotOutput) => {
+const onDelete = (row: BasePathologySubDiseaseOutput) => {
   proxy.$modal
-    .confirmDelete(`确定要删除【${row.samplingSpotName}】?`)
+    .confirmDelete(`确定要删除【${row.subDiseaseName}】?`)
     .then(async () => {
-      await new BasePathologySamplingSpotApi().delete({ id: row.id }, { loading: true, showSuccessMessage: true })
+      await new BasePathologySubDiseaseApi().delete({ id: row.id }, { loading: true, showSuccessMessage: true })
       onQuery()
     })
     .catch(() => {})
 }
+
 const onTablePageOrSizeChange = async (page: TablePageType) => {
   state.pageInput.currentPage = page.currentPage
   state.pageInput.pageSize = page.pageSize
   await onQuery()
 }
-const currentRowChange = (val: BasePathologySamplingSpotOutput) => {
-  emit('onCurrRowChange', val)
-}
-defineExpose({
-  currentRowChange,
-})
 </script>
-
-<style scoped lang="scss">
+<style scoped>
 .my-container {
   padding-top: 10px;
 }
