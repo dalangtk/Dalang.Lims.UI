@@ -174,4 +174,80 @@ export class BaseOptionsApi<SecurityDataType = unknown> extends HttpClient<Secur
       format: 'json',
       ...params,
     })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetPathologySampleTypeOptions
+   * @summary 获取病理样本类型选项
+   * @request POST:/api/lims/option-list/get-pathology-sample-type-options
+   * @secure
+   */
+  getPathologySampleTypeOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-pathology-sample-type-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetDiseaseOptions
+   * @summary 获取疾病选项
+   * @request POST:/api/lims/option-list/get-disease-options
+   * @secure
+   */
+  getDiseaseOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-disease-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetPathologyDiagnosisTemplateOptions
+   * @summary 获取病理诊断模板选项
+   * @request POST:/api/lims/option-list/get-pathology-diagnosis-template-options
+   * @secure
+   */
+  getPathologyDiagnosisTemplateOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-pathology-diagnosis-template-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetPathologyGrossExaminationTemplateOptions
+   * @summary 获取病理巨检模板选项
+   * @request POST:/api/lims/option-list/get-pathology-gross-examination-template-options
+   * @secure
+   */
+  getPathologyGrossExaminationTemplateOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-pathology-gross-examination-template-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
 }

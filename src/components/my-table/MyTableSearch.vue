@@ -93,7 +93,7 @@ const onSearch = (formEl: FormInstance | undefined) => {
   if (!formEl) return
   formEl.validate((valid) => {
     if (valid) {
-      console.log('state.form',state.form)
+      console.log('state.form', state.form)
       emit('search', state.form)
       console.log(state.form)
     } else {
@@ -115,9 +115,16 @@ const initFormField = () => {
     else state.form[v.prop] = v.defaultVal
   })
 }
+const getSelectValue = (prop: string) => {
+  return state.form[prop]
+}
 // 页面加载时
 onMounted(() => {
   initFormField()
+})
+
+defineExpose({
+  getSelectValue,
 })
 </script>
 

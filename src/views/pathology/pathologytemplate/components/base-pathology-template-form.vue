@@ -28,7 +28,7 @@
                   <el-input v-model="state.form.templateName" placeholder="请输入模板名称" clearable />
                 </el-form-item>
               </el-col>
-              <el-col :span="24">
+              <el-col :span="24" v-if="props.wfCode === 'histology'">
                 <el-form-item label="模板类型" prop="templateType">
                   <el-select v-model="state.form.templateType" placeholder="请选择模板类型">
                     <el-option v-for="item in templateTypeList" :key="item.value" :label="item.label" :value="item.value" />
@@ -105,12 +105,12 @@ import { makePy, makeWb } from '/@/utils/cuscode'
 // 动态导入不同wfcode对应的编辑组件
 const editorComponents: Record<string, any> = {
   tct: () => import('/@/views/pathology/tct/components/tctinput.vue'),
-
+  histology: () => import('/@/views/pathology/pathologytemplate/components/commontemplateinput.vue'),
   // histology: () => import('/@/views/pathology/histology/components/histologyinput-mod.vue'),
   // biopsy: () => import('/@/views/pathology/biopsy/components/biopsyinput-mod.vue'),
 }
 
-defineProps({
+const props = defineProps({
   title: {
     type: String,
     default: '',
@@ -210,13 +210,6 @@ const defaultToAdd = (): BasePathologyTemplateAddInput => {
     isDefaultResult: null,
     sort: 0,
     isValid: true,
-    proTime: new Date(),
-    proId: 0,
-    proName: '',
-    modId: null,
-    modName: null,
-    modTime: null,
-    isModified: false,
   } as BasePathologyTemplateAddInput
 }
 

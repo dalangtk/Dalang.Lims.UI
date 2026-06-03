@@ -177,4 +177,23 @@ export class BasePathologyDiseaseApi<SecurityDataType = unknown> extends HttpCli
       secure: true,
       ...params,
     })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name GetDiseaseList
+   * @summary 获取疾病列表
+   * @request POST:/api/pathology/base-pathology-disease/get-disease-list
+   * @secure
+   */
+  getDiseaseList = (data: string[], params: RequestParams = {}) =>
+    this.request<AxiosResponse, any>({
+      path: `/api/pathology/base-pathology-disease/get-disease-list`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
 }

@@ -1,6 +1,6 @@
 <template>
   <div class="my-layout my-container">
-    <TableSearch :search="state.search" @search="onSearch" />
+    <TableSearch ref="tableSearchRef" :search="state.search" @search="onSearch" />
     <MyTable
       border
       tableName="baseGroup"
@@ -34,7 +34,7 @@
 
       <el-table-column prop="templateType" label="模板类型" min-width="120">
         <template #default="{ row }">
-          <el-tag type="">{{ row.templateType === 1 ? '诊断模板' : '巨检模板' }}</el-tag>
+          <el-tag type="info">{{ row.templateType === 1 ? '诊断模板' : '巨检模板' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column v-auths="[perms.delete]" label="操作" :width="actionColWidth" fixed="right">
@@ -59,10 +59,7 @@
 <script lang="ts" setup name="/pathology/pathologytemplate">
 import { defineAsyncComponent, getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
-import {
-  BasePathologyTemplateOutput,
-  BasePathologyTemplateQueryListInput
-} from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
+import { BasePathologyTemplateOutput, BasePathologyTemplateQueryListInput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
 import TableSearch from '/@/components/my-table/MyTableSearch.vue'
 import MyTable from '/@/components/my-table/index.vue'
 
@@ -76,6 +73,7 @@ const BasePathologyTemplateForm = defineAsyncComponent(() => import('./component
 
 const { proxy } = getCurrentInstance() as any
 var table = ref()
+const tableSearchRef = ref()
 const basePathologyTemplateFormRef = ref()
 
 //权限配置
@@ -83,7 +81,6 @@ const perms = {
   add: 'api:pathology:base-pathology-template:add',
   update: 'api:pathology:base-pathology-template:update',
   delete: 'api:pathology:base-pathology-template:delete',
-  batDelete: 'api:pathology:base-pathology-template:batch-delete',
 }
 
 const actionColWidth = authAll([perms.update, perms.delete]) ? 135 : 70
@@ -147,7 +144,6 @@ onBeforeMount(() => {
 })
 
 const onSearch = (data: EmptyObjectType) => {
-  console.log(data)
   state.pageInput.filter = Object.assign({}, state.pageInput.filter, { ...data })
   table.value.pageReset()
 }
@@ -172,7 +168,10 @@ const onQuery = async () => {
 
 const onAdd = () => {
   // 根据工作流代码新增模板
-  const wfCode = state.pageInput.filter!.wfCode
+  let wfCode = tableSearchRef.value.getSelectValue('wfCode')
+  if (!wfCode) {
+    wfCode = state.pageInput.filter!.wfCode ?? ''
+  }
   state.basePathologyTemplateFormTitle = '新增诊断模板'
   basePathologyTemplateFormRef.value.open({}, wfCode)
 }

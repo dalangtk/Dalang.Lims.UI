@@ -8,6 +8,7 @@ import {
   BasePathologyTemplateQueryListInput,
 } from './datacontract/pathologytemplate-datacontract'
 import { ResultBaseOutput, ResultBasePageOutput, GetPageInput } from '/@/api/lims/basedata/datacontract/base'
+import { LabelValueOutput } from '../../admin/data-contracts'
 
 export class BasePathologyTemplateApi<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -135,6 +136,25 @@ export class BasePathologyTemplateApi<SecurityDataType = unknown> extends HttpCl
       method: 'DELETE',
       query: query,
       secure: true,
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name GetPathologyTemplateList
+   * @summary 获取诊断模板列表
+   * @request POST:/api/pathology/base-pathology-template/get-pathology-template-list
+   * @secure
+   */
+  getPathologyTemplateList = (data: string[], params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/pathology/base-pathology-template/get-pathology-template-list`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
       ...params,
     })
 }

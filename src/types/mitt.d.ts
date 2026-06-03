@@ -84,6 +84,7 @@ declare type MittType<T = any> = {
   refreshPathologySamplingSpot: ?T
   refreshPathologySubDisease: ?T
   refreshBasePathologyDisease: ?T
+  refreshBasePathologySampleType: ?T
 }
 
 // mitt 参数类型定义
