@@ -159,6 +159,12 @@
               </div>
             </template>
           </el-table-column>
+          <el-table-column label="类型" prop="imageType">
+            <template #default="{ row }">
+              <el-tag v-if="row.imageType === 1" type="warning">大体</el-tag>
+              <el-tag v-else>常规</el-tag>
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="80" fixed="right" v-if="imageCanEdit">
             <template #default="{ row }">
               <!-- <el-button icon="ele-EditPen" size="small" text type="primary" @click="onEdit(row)"></el-button> -->

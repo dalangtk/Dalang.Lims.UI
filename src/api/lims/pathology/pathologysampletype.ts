@@ -29,6 +29,25 @@ export class BasePathologySampleTypeApi<SecurityDataType = unknown> extends Http
       format: 'json',
       ...params,
     })
+    /**
+   * No description
+   *
+   * @tags pathology
+   * @name GetPageWithoutChildren
+   * @summary 查询分页
+   * @request POST:/api/pathology/base-pathology-sample-type/get-page-without-children
+   * @secure
+   */
+  getPageWithoutChildren = (data: GetPageInput<BasePathologySampleTypeQueryListInput>, params: RequestParams = {}) =>
+    this.request<ResultBasePageOutput<BasePathologySampleTypeListOutput>, any>({
+      path: `/api/pathology/base-pathology-sample-type/get-page-without-children`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
   /**
    * No description
    *

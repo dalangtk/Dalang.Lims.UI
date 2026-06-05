@@ -7,6 +7,7 @@
       class="my-table"
       :data="state.basePathologySampleTypeListData"
       ref="table"
+      size="small"
       row-key="id"
       default-expand-all
       :total="state.total"
@@ -51,7 +52,7 @@
   </div>
 </template>
 
-<script lang="ts" setup name="pathology/pathologysampletype">
+<script lang="ts" setup name="/pathology/pathologysampletype">
 import { defineAsyncComponent, getCurrentInstance, onBeforeMount, onMounted, reactive, ref } from 'vue'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
 import {

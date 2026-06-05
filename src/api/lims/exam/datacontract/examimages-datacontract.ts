@@ -13,6 +13,7 @@ export interface ExamImagesAddInput {
   zoomName?: string | null
   antiBodyCode?: string | null
   antiBodyName?: string | null
+  imageType: number
   isShow?: boolean | null
   sort?: number
   ismodifled?: boolean | null

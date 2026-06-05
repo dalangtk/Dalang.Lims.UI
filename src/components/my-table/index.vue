@@ -145,7 +145,7 @@ const convertNullToString = (arr: any) => {
 }
 const pageReset = () => {
   state.page.currentPage = 1
-  state.page.pageSize = 10
+  state.page.pageSize = 20
   emit('pageOrSizeChange', state.page)
 }
 // 打印

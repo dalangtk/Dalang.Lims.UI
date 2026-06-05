@@ -123,7 +123,7 @@ onBeforeMount(() => {
 
 const onSearch = (data: EmptyObjectType) => {
   state.pageInput.filter = Object.assign({}, state.pageInput.filter, { ...data })
-  table.value.pageReset()
+  onQuery()
 }
 const currentRowChange = (val: BasePathologyDiseaseOutput) => {
   emit('onCurrRowChange', val)

@@ -8,6 +8,10 @@ import {
   BasePathologySamplingSpotQueryListInput,
 } from './datacontract/pathologysamplingspot-datacontract'
 import { ResultBaseOutput, ResultBasePageOutput, GetPageInput } from '/@/api/lims/basedata/datacontract/base'
+import {
+  BasePathologySamplingSpotDetailAddInput,
+  BasePathologySamplingSpotDetailListOutput,
+} from './datacontract/pathologysamplingspotdetail-datacontract'
 
 export class BasePathologySamplingSpotApi<SecurityDataType = unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -124,6 +128,71 @@ export class BasePathologySamplingSpotApi<SecurityDataType = unknown> extends Ht
   ) =>
     this.request<AxiosResponse, any>({
       path: `/api/pathology/base-pathology-sampling-spot/delete`,
+      method: 'DELETE',
+      query: query,
+      secure: true,
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name AddSamplingSpotDetail
+   * @summary 新增取材部位明细
+   * @request POST:/api/pathology/base-pathology-sampling-spot/add-sampling-spot-detail
+   * @secure
+   */
+  addSamplingSpotDetail = (data: Array<BasePathologySamplingSpotDetailAddInput>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<boolean>, any>({
+      path: `/api/pathology/base-pathology-sampling-spot/add-sampling-spot-detail`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name GetSamplingSpotDetails
+   * @summary 查询取材部位明细
+   * @request GET:/api/pathology/base-pathology-sampling-spot/get-sampling-spot-details
+   * @secure
+   */
+  getSamplingSpotDetails = (
+    query?: {
+      samplingSpotCode?: string | null
+    },
+    params: RequestParams = {}
+  ) =>
+    this.request<ResultBaseOutput<BasePathologySamplingSpotDetailListOutput[]>, any>({
+      path: `/api/pathology/base-pathology-sampling-spot/get-sampling-spot-details`,
+      method: 'GET',
+      query: query,
+      secure: true,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name DeleteSamplingSpotDetail
+   * @summary 删除取材部位明细
+   * @request DELETE:/api/pathology/base-pathology-sampling-spot/delete-sampling-spot-detail
+   * @secure
+   */
+  deleteSamplingSpotDetail = (
+    query?: {
+      /** @format int64 */
+      id?: number
+    },
+    params: RequestParams = {}
+  ) =>
+    this.request<ResultBaseOutput<boolean>, any>({
+      path: `/api/pathology/base-pathology-sampling-spot/delete-sampling-spot-detail`,
       method: 'DELETE',
       query: query,
       secure: true,
