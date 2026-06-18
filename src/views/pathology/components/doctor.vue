@@ -124,7 +124,6 @@ defineExpose({
 .el-form .el-col {
   margin-bottom: 0 !important; /* 根据需要调整或移除 */
 }
-.el-form.el-form--inline .el-form-item--default.el-form-item:last-of-type,
 .el-form.el-form--inline .el-form-item--small.el-form-item:last-of-type {
   margin-bottom: 0 !important;
 }

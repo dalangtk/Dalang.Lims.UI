@@ -250,4 +250,23 @@ export class BaseOptionsApi<SecurityDataType = unknown> extends HttpClient<Secur
       format: 'json',
       ...params,
     })
+  /**
+   * No description
+   *
+   * @tags lims
+   * @name GetSamplingSpotOptions
+   * @summary 获取病理取材部位选项
+   * @request POST:/api/lims/option-list/get-sampling-spot-options
+   * @secure
+   */
+  getSamplingSpotOptions = (data: GetPageInput<string>, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
+      path: `/api/lims/option-list/get-sampling-spot-options`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
 }

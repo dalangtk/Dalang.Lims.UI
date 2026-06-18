@@ -7,7 +7,7 @@
       <PathologyList
         :first-check-component="firstCheckComponent"
         :second-check-component="secondCheckComponent"
-        :pathology-input-component="pathologyInputComponent"
+        :pathology-input-component="grossExaminationInputComponent"
         :wf-code="props.wfCode"
         :result-type="3"
         ref="giantInspectionRef"
@@ -45,6 +45,10 @@ import PathologyList from '/@/views/pathology/components/pathologylist.vue'
 const activeName = ref('register')
 
 const props = defineProps({
+  grossExaminationInputComponent: {
+    type: Object, // 组件定义的类型
+    required: true,
+  },
   firstCheckComponent: {
     type: Object, // 组件定义的类型
     required: true,

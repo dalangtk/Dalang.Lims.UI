@@ -44,3 +44,17 @@ export interface BasePathologyTemplateListOutput extends BasePathologyTemplateOu
   modName?: string | null
   modTime?: Date | null
 }
+
+/**
+ * 获取巨检模板返回
+ */
+export interface GrossExaminationTemplateOutput {
+  sampleTypeName?: string | null
+  templateCode?: string | null
+  templateName?: string | null
+  templateContent?: string | null
+}
+
+export interface GrossExaminationTemplateQueryInput {
+  sampleTypeCodes?: string[] | null
+}

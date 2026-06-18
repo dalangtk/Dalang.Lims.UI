@@ -112,13 +112,16 @@
 import { reactive, ref } from 'vue'
 import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
 import { TctResult } from '/@/api/lims/pathology/datacontract/pathologyresult-datacontract'
+import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest';
 
 const props = withDefaults(
   defineProps<{
     auditType?: PathologyAuditTypeEnum
+    resultType?: number
   }>(),
   {
     auditType: PathologyAuditTypeEnum.FirstAudit,
+    resultType: 1,
   }
 )
 
@@ -129,6 +132,19 @@ const state = reactive({
 
 const getResult = () => {
   return state.formData
+}
+const refreshData = (examInfoId: number) => {
+  console.log('tct refreshData', examInfoId)
+  new PathologyTestApi().getSpecialResultList({ examInfoId: examInfoId, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
+    if (res.data) {
+      const result = res.data.reduce((acc: Record<string, any>, item) => {
+        acc[item.fieldCode!] = item.fieldValue
+        return acc
+      }, {})
+      setResult(result)
+      return res.data
+    }
+  })
 }
 const setEditable = (editable: boolean) => {
   state.editable = editable
@@ -185,7 +201,8 @@ const defaultToAdd = () => {
 defineExpose({
   getResult,
   setResult,
-  setEditable
+  setEditable,
+  refreshData,
 })
 </script>
 

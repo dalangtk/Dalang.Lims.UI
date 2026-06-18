@@ -18,3 +18,6 @@ export interface TctResult {
   remarksEn: string | null
   internalNote: string | null
 }
+export interface GrossExaminationResult {
+  grossExamination: string | null
+}

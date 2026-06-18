@@ -6,6 +6,8 @@ import {
   BasePathologyTemplateAddInput,
   BasePathologyTemplateUpdateInput,
   BasePathologyTemplateQueryListInput,
+  GrossExaminationTemplateQueryInput,
+  GrossExaminationTemplateOutput,
 } from './datacontract/pathologytemplate-datacontract'
 import { ResultBaseOutput, ResultBasePageOutput, GetPageInput } from '/@/api/lims/basedata/datacontract/base'
 import { LabelValueOutput } from '../../admin/data-contracts'
@@ -150,6 +152,25 @@ export class BasePathologyTemplateApi<SecurityDataType = unknown> extends HttpCl
   getPathologyTemplateList = (data: string[], params: RequestParams = {}) =>
     this.request<ResultBaseOutput<LabelValueOutput[]>, any>({
       path: `/api/pathology/base-pathology-template/get-pathology-template-list`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name GetGrossExaminationTemplate
+   * @summary 获取巨检模板
+   * @request POST:/api/pathology/base-pathology-template/get-gross-examination-template
+   * @secure
+   */
+  getGrossExaminationTemplate = (data: GrossExaminationTemplateQueryInput, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<GrossExaminationTemplateOutput[]>, any>({
+      path: `/api/pathology/base-pathology-template/get-gross-examination-template`,
       method: 'POST',
       body: data,
       secure: true,

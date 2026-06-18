@@ -40,7 +40,7 @@
         <div class="result-card">
           <Doctor :wf-code="props.wfCode" :result-type="props.resultType" ref="doctorRef"></Doctor>
           <div style="height: 100%; overflow: scroll">
-            <component ref="pathologyInputRef" :is="pathologyInputComponent"></component>
+            <component :result-type="props.resultType" ref="pathologyInputRef" :is="pathologyInputComponent"></component>
           </div>
           <el-collapse v-model="state.actived" expand-icon-position="left" accordion @change="moreTabVisableChange">
             <el-collapse-item title="更多" name="1" style="height: 100%; overflow-y: hidden">
@@ -347,12 +347,39 @@ const handleSave = async () => {
     resultType: props.resultType,
   } as SaveResultInput
 
+  if (!state.currSpecialResultList) {
+    state.currSpecialResultList = []
+  }
   if (pathologyInputRef.value && typeof pathologyInputRef.value.getResult === 'function') {
     const result = await pathologyInputRef.value.getResult()
+    console.log('getResult', result)
     if (result) {
-      state.currSpecialResultList.forEach((item) => {
-        item.fieldValue = result[item.fieldCode!]
-      })
+      if (state.currSpecialResultList?.length <= 0) {
+        new PathologyTestApi().getSpecialResultList({ examInfoId: currentSample.value!.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
+          if (res.data && res.data?.length > 0) {
+            state.currSpecialResultList = res.data
+          }
+        })
+      }
+      if (state.currSpecialResultList?.length > 0) {
+        state.currSpecialResultList.forEach((item) => {
+          item.fieldValue = result[item.fieldCode!]
+        })
+      } else {
+        //循环result对象，添加记录到state.currSpecialResultList中
+        for (let key in result) {
+          state.currSpecialResultList.push({
+            fieldCode: key,
+            fieldValue: result[key],
+            resultType: props.resultType,
+            groupCode: currentSample.value!.groupCode,
+            examInfoId: currentSample.value!.id,
+            sampleNo: currentSample.value!.sampleNo,
+            barcode: currentSample.value!.barcode,
+          } as any)
+        }
+      }
+
       param.specialResultList = state.currSpecialResultList
       new PathologyTestApi().saveResult(param, { showErrorMessage: true }).then((res) => {
         if (res.success) {
@@ -382,22 +409,14 @@ const switchSample = (row: ExamInfoOutput) => {
       currentSample.value = curr
     }
     activeId.value = row.id
-
-    // new PathologyTestApi().getSpecialResultList({ examInfoId: row.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
-    //   if (res.data) {
-    //     state.currSpecialResultList = res.data
-    //     const result = res.data.reduce((acc: Record<string, any>, item) => {
-    //       acc[item.fieldCode!] = item.fieldValue
-    //       return acc
-    //     }, {})
-    //     pathologyInputRef.value.setResult(result)
-    //   }
-    // })
     nextTick(() => {
+      let result = pathologyInputRef.value.refreshData(row.id)
+      console.log('getreturnedresult', result)
+      state.currSpecialResultList = result
       var editable =
         currentSample.value?.sampleStatus == SampleStatus.Testing ||
         (props.resultType == 2 && currentSample.value?.sampleStatus == SampleStatus.FirstCheck)
-      getSpecialResultList(row.id)
+      //getSpecialResultList(row.id)
       doctorRef.value.setData(row)
       pathologyInputRef.value.setEditable(editable)
     })
