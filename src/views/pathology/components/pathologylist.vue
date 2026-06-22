@@ -336,6 +336,7 @@ const handleSelectTemplate = (templateList: BasePathologyTemplateOutput[]) => {
   pathologyInputRef.value.setResult(JSON.parse(content))
 }
 const handleSave = async () => {
+  modal.loading(null)
   var doctor = doctorRef.value.getDoctor() as PathologyDoctor
   if (doctor.reportTime) {
     let time = formatDate(parseDate(doctor.reportTime!), 'YYYY-mm-dd HH:MM:SS')
@@ -383,6 +384,8 @@ const handleSave = async () => {
       param.specialResultList = state.currSpecialResultList
       new PathologyTestApi().saveResult(param, { showErrorMessage: true }).then((res) => {
         if (res.success) {
+          switchSample(currentSample.value!)
+          modal.closeLoading()
           modal.msgSuccess('保存成功')
         }
       })

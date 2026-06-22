@@ -62,11 +62,17 @@
         </div>
       </div>
       <div class="center">
-        <el-input class="gross-input" type="textarea" :disabled="!state.editable" v-model="state.formData.grossExamination"></el-input>
+        <el-input
+          class="gross-input"
+          type="textarea"
+          :disabled="!state.editable"
+          v-model="state.formData.grossExamination"
+          ref="grossInputRef"
+          @keydown.right.prevent="handleRightKey"
+          @keydown.left.prevent="handleLeftKey"
+        ></el-input>
       </div>
-      <div class="right">
-      
-      </div>
+      <div class="right"></div>
     </div>
     <div class="record">
       <el-form inline size="small" label-width="60px">
@@ -82,7 +88,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted } from 'vue'
+import { reactive, ref, onMounted, nextTick } from 'vue'
 import MyTable from '/@/components/my-table/index.vue'
 import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
 import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
@@ -96,6 +102,7 @@ import { BasePathologySampleTypeOutput } from '/@/api/lims/pathology/datacontrac
 import { BaseOptionsApi } from '/@/api/lims/shared/options'
 import { LabelValueOutput } from '/@/api/admin/data-contracts'
 import { BasePathologyTemplateApi } from '/@/api/lims/pathology/pathologytemplate'
+import { isBlank } from '/@/utils/toolsValidate'
 
 const props = withDefaults(
   defineProps<{
@@ -132,7 +139,13 @@ const onAddSamplingSpotDetail = () => {
 const onSelectTemplate = (row: GrossExaminationTemplateOutput) => {
   console.log('选择模板', row)
   let templateObj = JSON.parse(row.templateContent ?? '{}')
-  state.formData.grossExamination = templateObj.diagnosis ?? ''
+  if (isBlank(state.formData?.grossExamination)) {
+    state.formData = {
+      grossExamination: templateObj.diagnosis ?? '',
+    }
+  } else {
+    state.formData.grossExamination += '\r\n' + templateObj.diagnosis
+  }
 }
 const querySamplingSpotOptions = (queryString: string) => {
   new BaseOptionsApi().getSamplingSpotOptions({ pageSize: 20, currentPage: 1, filter: queryString }).then((res) => {
@@ -190,8 +203,10 @@ const refreshData = (examInfoId: number) => {
 }
 const setResult = (result: any) => {
   console.log('设置结果:', result)
-  state.formData = {
-    grossExamination: result?.grossExamination ?? '',
+  if (!state.formData.grossExamination) {
+    state.formData = {
+      grossExamination: result?.grossExamination ?? '',
+    }
   }
 }
 const getResult = () => {
@@ -201,6 +216,97 @@ const setEditable = (editable: boolean) => {
   console.log('gross setEditable', editable)
   state.editable = editable
 }
+
+// #region 【】标记导航
+const grossInputRef = ref()
+
+/** 在文本中查找所有【】标记的位置 */
+function findBrackets(text: string): { start: number; end: number }[] {
+  const result: { start: number; end: number }[] = []
+  const regex = /【[^】]*】/g
+  let match: RegExpExecArray | null
+  while ((match = regex.exec(text)) !== null) {
+    result.push({ start: match.index, end: match.index + match[0].length })
+  }
+  return result
+}
+
+function handleRightKey() {
+  const ta = grossInputRef.value?.textarea as HTMLTextAreaElement | undefined
+  if (!ta) return
+  const text = state.formData.grossExamination ?? ''
+  const selStart = ta.selectionStart
+  const selEnd = ta.selectionEnd
+  const brackets = findBrackets(text)
+
+  // 检查当前选区是否正好选中了一个【】标记（即上一次导航选中的）
+  const exactMatch = brackets.find((b) => b.start === selStart && b.end === selEnd)
+
+  if (exactMatch) {
+    // 去掉当前【】，保留内部文本
+    const inner = text.slice(exactMatch.start + 1, exactMatch.end - 1)
+    const newText = text.slice(0, exactMatch.start) + inner + text.slice(exactMatch.end)
+    state.formData.grossExamination = newText
+
+    // 定位到下一个【】
+    nextTick(() => {
+      const newTa = grossInputRef.value?.textarea as HTMLTextAreaElement | undefined
+      if (!newTa) return
+      const newBrackets = findBrackets(newText)
+      const next = newBrackets.find((b) => b.start > exactMatch.start)
+      if (next) {
+        newTa.setSelectionRange(next.start, next.end)
+      } else {
+        newTa.setSelectionRange(exactMatch.start, exactMatch.start)
+      }
+    })
+  } else {
+    // 从光标当前位置往后找下一个【】
+    const next = brackets.find((b) => b.start > Math.max(selStart, selEnd === selStart ? selStart : selEnd))
+    if (next) {
+      ta.setSelectionRange(next.start, next.end)
+    }
+  }
+}
+
+function handleLeftKey() {
+  const ta = grossInputRef.value?.textarea as HTMLTextAreaElement | undefined
+  if (!ta) return
+  const text = state.formData.grossExamination ?? ''
+  const selStart = ta.selectionStart
+  const selEnd = ta.selectionEnd
+  const brackets = findBrackets(text)
+
+  // 检查当前选区是否正好选中了一个【】标记（即上一次导航选中的）
+  const exactMatch = brackets.find((b) => b.start === selStart && b.end === selEnd)
+
+  if (exactMatch) {
+    // 去掉当前【】，保留内部文本
+    const inner = text.slice(exactMatch.start + 1, exactMatch.end - 1)
+    const newText = text.slice(0, exactMatch.start) + inner + text.slice(exactMatch.end)
+    state.formData.grossExamination = newText
+
+    // 定位到上一个【】
+    nextTick(() => {
+      const newTa = grossInputRef.value?.textarea as HTMLTextAreaElement | undefined
+      if (!newTa) return
+      const newBrackets = findBrackets(newText)
+      const prev = [...newBrackets].reverse().find((b) => b.end <= exactMatch.start)
+      if (prev) {
+        newTa.setSelectionRange(prev.start, prev.end)
+      } else {
+        newTa.setSelectionRange(exactMatch.start, exactMatch.start)
+      }
+    })
+  } else {
+    // 从光标当前位置往前找上一个【】
+    const prev = [...brackets].reverse().find((b) => b.end < selStart)
+    if (prev) {
+      ta.setSelectionRange(prev.start, prev.end)
+    }
+  }
+}
+// #endregion
 
 defineExpose({
   refreshData,

@@ -385,7 +385,7 @@ export function verifyCarNum(val: string) {
  * @param value 当前值字符串
  * @returns 值是否为空
  */
-export function isBlank(value: string) {
+export function isBlank(value: string | null) {
   if (value == null || typeof value == 'undefined') {
     return true
   }
