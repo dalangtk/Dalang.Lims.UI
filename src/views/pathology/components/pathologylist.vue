@@ -38,9 +38,8 @@
       <!-- 2. 中间：检验结果 -->
       <main class="panel-center">
         <div class="result-card">
-          <Doctor :wf-code="props.wfCode" :result-type="props.resultType" ref="doctorRef"></Doctor>
           <div style="height: 100%; overflow: scroll">
-            <component :result-type="props.resultType" ref="pathologyInputRef" :is="pathologyInputComponent"></component>
+            <component :result-type="props.resultType" :wf-code="props.wfCode" ref="pathologyInputRef" :is="pathologyInputComponent"></component>
           </div>
           <el-collapse v-model="state.actived" expand-icon-position="left" accordion @change="moreTabVisableChange">
             <el-collapse-item title="更多" name="1" style="height: 100%; overflow-y: hidden">
@@ -118,7 +117,7 @@ import { BasePurposeOutput, PurposeAndComboOutput } from '/@/api/lims/basedata/d
 import { BaseSampleTypeOutput } from '/@/api/lims/basedata/datacontract/sampletype-datacontract'
 import { AddOrDeletePurposeInput, AuditInput, CancelTestInput, UnAuditInput } from '/@/api/lims/exam/datacontract/sampletest-datacontract'
 import { SampleTestApi } from '/@/api/lims/exam/sampletest'
-import { PathologyDoctor, PathologyExamListQueryInput, SaveResultInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
+import { PathologyDoctor, PathologyExamListQueryInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { ExamInfoOutput, ExamListQueryInput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 import { ExamResultOutput } from '/@/api/lims/shared/datacontract/examresult-datacontract'
 import { ExecuteTypeEnum, OperationTypeEnum } from '/@/api/lims/shared/enums/operationtypeenum'
@@ -136,7 +135,6 @@ import AuditToolBar from '/@/views/pathology/components/audittoolbar.vue'
 import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
 import { BasePathologyTemplateOutput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
 import { ExamSpecialResultListOutput, ExamSpecialResultOutput } from '/@/api/lims/shared/datacontract/examspecialresult-datacontract'
-import Doctor from '/@/views/pathology/components/doctor.vue'
 
 const props = defineProps({
   firstCheckComponent: {
@@ -176,7 +174,6 @@ const delItemSelectRef = ref()
 const previewRef = ref()
 const sampleListRef = ref()
 const pathologyInputRef = ref()
-const doctorRef = ref()
 
 const aggregateConfig = reactive<VxeTablePropTypes.AggregateConfig<ExamInfoOutput>>({
   groupFields: ['testDate'],
@@ -286,7 +283,8 @@ const querySampleList = (examId?: number) => {
   if (examId != undefined && examId > 0) {
     queryParam = {
       examInfoId: examId,
-    } as ExamListQueryInput
+      wfCode: props.wfCode,
+    } as PathologyExamListQueryInput
   } else {
     queryParam = {
       wfCode: props.wfCode,
@@ -295,7 +293,7 @@ const querySampleList = (examId?: number) => {
       endDate: state.queryDateRange[1],
     } as PathologyExamListQueryInput
   }
-  new SampleTestApi().getSampleList(queryParam, { showErrorMessage: true }).then((res) => {
+  new PathologyTestApi().getPathologySampleList(queryParam, { showErrorMessage: true }).then((res) => {
     if (res.data && res.data.length > 0) {
       res.data.forEach((item) => {
         item.testDate = new Date(item.testDate)
@@ -337,59 +335,23 @@ const handleSelectTemplate = (templateList: BasePathologyTemplateOutput[]) => {
 }
 const handleSave = async () => {
   modal.loading(null)
-  var doctor = doctorRef.value.getDoctor() as PathologyDoctor
-  if (doctor.reportTime) {
-    let time = formatDate(parseDate(doctor.reportTime!), 'YYYY-mm-dd HH:MM:SS')
-    doctor.reportTime = time
-  }
-  let param = {
-    examInfoId: currentSample.value!.id,
-    doctor: doctor,
-    resultType: props.resultType,
-  } as SaveResultInput
-
-  if (!state.currSpecialResultList) {
-    state.currSpecialResultList = []
-  }
-  if (pathologyInputRef.value && typeof pathologyInputRef.value.getResult === 'function') {
-    const result = await pathologyInputRef.value.getResult()
-    console.log('getResult', result)
-    if (result) {
-      if (state.currSpecialResultList?.length <= 0) {
-        new PathologyTestApi().getSpecialResultList({ examInfoId: currentSample.value!.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
-          if (res.data && res.data?.length > 0) {
-            state.currSpecialResultList = res.data
-          }
-        })
-      }
-      if (state.currSpecialResultList?.length > 0) {
-        state.currSpecialResultList.forEach((item) => {
-          item.fieldValue = result[item.fieldCode!]
-        })
+  // var doctor = doctorRef.value.getDoctor() as PathologyDoctor
+  if (pathologyInputRef.value && typeof pathologyInputRef.value.saveResult === 'function') {
+    try {
+      const res = await pathologyInputRef.value.saveResult(currentSample.value!.id)
+      if (res && res.success) {
+        switchSample(currentSample.value!)
+        modal.closeLoading()
+        modal.msgSuccess('保存成功')
       } else {
-        //循环result对象，添加记录到state.currSpecialResultList中
-        for (let key in result) {
-          state.currSpecialResultList.push({
-            fieldCode: key,
-            fieldValue: result[key],
-            resultType: props.resultType,
-            groupCode: currentSample.value!.groupCode,
-            examInfoId: currentSample.value!.id,
-            sampleNo: currentSample.value!.sampleNo,
-            barcode: currentSample.value!.barcode,
-          } as any)
-        }
+        modal.closeLoading()
       }
-
-      param.specialResultList = state.currSpecialResultList
-      new PathologyTestApi().saveResult(param, { showErrorMessage: true }).then((res) => {
-        if (res.success) {
-          switchSample(currentSample.value!)
-          modal.closeLoading()
-          modal.msgSuccess('保存成功')
-        }
-      })
+    } catch (err) {
+      modal.closeLoading()
+      console.error('保存失败', err)
     }
+  } else {
+    modal.closeLoading()
   }
 }
 // const currentSample = computed(() => state.allSamples.find((i) => i.id === state.activeId))
@@ -413,16 +375,10 @@ const switchSample = (row: ExamInfoOutput) => {
     }
     activeId.value = row.id
     nextTick(() => {
-      let result = pathologyInputRef.value.refreshData(row.id)
-      console.log('getreturnedresult', result)
-      state.currSpecialResultList = result
-      var editable =
-        currentSample.value?.sampleStatus == SampleStatus.Testing ||
-        (props.resultType == 2 && currentSample.value?.sampleStatus == SampleStatus.FirstCheck)
-      //getSpecialResultList(row.id)
-      doctorRef.value.setData(row)
-      pathologyInputRef.value.setEditable(editable)
+      pathologyInputRef.value.refreshData(row)
     })
+  } else {
+    pathologyInputRef.value.refreshData(null)
   }
 }
 

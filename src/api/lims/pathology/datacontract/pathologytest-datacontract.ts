@@ -2,7 +2,7 @@ import { ExamListQueryInput } from '../../shared/datacontract/examinfo-datacontr
 import { ExamSpecialResultListOutput } from '../../shared/datacontract/examspecialresult-datacontract'
 
 export interface PathologyExamListQueryInput extends ExamListQueryInput {
-  wfCode?: string | null
+  wfCode?: string
 }
 export interface PathologyReceiveInput {
   barcode: string | null

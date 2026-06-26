@@ -109,10 +109,14 @@ const handleChangeReportDoctor = (val: any) => {
 const getDoctor = (): PathologyDoctor => {
   return state.doctor
 }
+const clearDoctor = () => {
+  state.doctor = {} as PathologyDoctor
+}
 
 defineExpose({
   setData,
   getDoctor,
+  clearDoctor,
 })
 </script>
 

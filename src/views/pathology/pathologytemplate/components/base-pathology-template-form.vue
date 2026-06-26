@@ -68,7 +68,7 @@
               <div v-if="!currentEditorComponent" class="loading-placeholder">
                 <el-empty description="请选择有效的工作流代码" />
               </div>
-              <component v-else ref="pathologyTemplateInputRef" :is="currentEditorComponent" />
+              <component :wf-code="state.wfCode" v-else ref="pathologyTemplateInputRef" :is="currentEditorComponent" />
             </div>
           </div>
         </div>

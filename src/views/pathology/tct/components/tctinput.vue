@@ -1,5 +1,7 @@
 <template>
   <div class="tct-container">
+    <Doctor :wf-code="props.wfCode" :result-type="props.resultType" ref="doctorRef"></Doctor>
+
     <el-form :model="state.formData" class="result-form" label-position="left" label-width="150px" size="small" :disabled="!state.editable">
       <el-row :gutter="10" class="h100">
         <!-- 左侧栏：标本情况与微生物选项 -->
@@ -112,39 +114,66 @@
 import { reactive, ref } from 'vue'
 import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
 import { TctResult } from '/@/api/lims/pathology/datacontract/pathologyresult-datacontract'
-import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest';
+import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
+import { SaveResultInput, PathologyDoctor } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
+import { ExamSpecialResultListOutput } from '/@/api/lims/shared/datacontract/examspecialresult-datacontract'
+import { formatDate, parseDate } from '/@/utils/formatTime'
+import Doctor from '/@/views/pathology/components/doctor.vue'
+import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
+import { SampleStatus } from '/@/api/lims/shared/enums/samplestatusenum'
 
 const props = withDefaults(
   defineProps<{
     auditType?: PathologyAuditTypeEnum
     resultType?: number
+    wfCode?: string
   }>(),
   {
     auditType: PathologyAuditTypeEnum.FirstAudit,
     resultType: 1,
+    wfCode: '',
   }
 )
+const doctorRef = ref()
 
 const state = reactive({
   formData: {} as TctResult,
   editable: true,
+  examInfoId: 0,
+  currSpecialResultList: [] as ExamSpecialResultListOutput[],
 })
 
 const getResult = () => {
   return state.formData
 }
-const refreshData = (examInfoId: number) => {
-  console.log('tct refreshData', examInfoId)
-  new PathologyTestApi().getSpecialResultList({ examInfoId: examInfoId, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
-    if (res.data) {
-      const result = res.data.reduce((acc: Record<string, any>, item) => {
-        acc[item.fieldCode!] = item.fieldValue
-        return acc
-      }, {})
-      setResult(result)
-      return res.data
-    }
-  })
+const refreshData = (examInfo: ExamInfoOutput | null) => {
+  console.log('tct refreshData', examInfo)
+  if (!examInfo) {
+    clearResult()
+  } else {
+    state.examInfoId = examInfo.id
+    doctorRef.value.setData(examInfo)
+    new PathologyTestApi().getSpecialResultList({ examInfoId: examInfo.id, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
+      if (res.data) {
+        state.currSpecialResultList = res.data ?? []
+        const result = res.data.reduce((acc: Record<string, any>, item) => {
+          acc[item.fieldCode!] = item.fieldValue
+          return acc
+        }, {})
+        setResult(result)
+      }
+    })
+    var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
+    setEditable(editable)
+    doctorRef.value.setEditable(editable)
+  }
+}
+const clearResult = () => {
+  state.examInfoId = 0
+  state.formData = {} as TctResult
+  state.currSpecialResultList = []
+  setResult({})
+  doctorRef.value.clearDoctor()
 }
 const setEditable = (editable: boolean) => {
   state.editable = editable
@@ -173,6 +202,71 @@ const setResult = (result: any) => {
     internalNote: result?.internalNote ?? '',
   }
   console.log(state.formData)
+}
+const saveResult = (examInfoId: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const result = state.formData
+    if (!result || Object.keys(result).length === 0) {
+      resolve(null)
+      return
+    }
+    let doctor = doctorRef.value.getDoctor() as PathologyDoctor
+
+    if (doctor.reportTime) {
+      let time = formatDate(parseDate(doctor.reportTime!), 'YYYY-mm-dd HH:MM:SS')
+      doctor.reportTime = time
+    }
+    let param = {
+      examInfoId: examInfoId,
+      doctor: doctor,
+      resultType: props.resultType,
+    } as SaveResultInput
+
+    const buildAndSave = (specialResultList: ExamSpecialResultListOutput[]) => {
+      if (specialResultList.length > 0) {
+        specialResultList.forEach((item) => {
+          item.fieldValue = (result as any)[item.fieldCode!] ?? item.fieldValue
+        })
+      } else {
+        for (let key in result) {
+          specialResultList.push({
+            fieldCode: key,
+            fieldValue: (result as any)[key],
+            resultType: props.resultType,
+            examInfoId: examInfoId,
+          } as any)
+        }
+      }
+      param.specialResultList = specialResultList
+      new PathologyTestApi()
+        .saveResult(param, { showErrorMessage: true })
+        .then((res) => {
+          if (res.success) {
+            state.currSpecialResultList = specialResultList
+            resolve(res)
+          } else {
+            reject(res)
+          }
+        })
+        .catch((err) => reject(err))
+    }
+
+    if (state.currSpecialResultList?.length > 0) {
+      buildAndSave([...state.currSpecialResultList])
+    } else {
+      new PathologyTestApi()
+        .getSpecialResultList({ examInfoId: examInfoId, resultType: props.resultType }, { showErrorMessage: true })
+        .then((res) => {
+          if (res.data && res.data.length > 0) {
+            state.currSpecialResultList = res.data
+            buildAndSave([...res.data])
+          } else {
+            buildAndSave([])
+          }
+        })
+        .catch(() => buildAndSave([]))
+    }
+  })
 }
 const defaultToAdd = () => {
   let val = {
@@ -203,6 +297,7 @@ defineExpose({
   setResult,
   setEditable,
   refreshData,
+  saveResult,
 })
 </script>
 

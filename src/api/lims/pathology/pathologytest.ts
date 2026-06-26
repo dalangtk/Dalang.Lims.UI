@@ -2,6 +2,7 @@ import { UserGetOptionOutput } from '../../admin/data-contracts'
 import { AuditInput, AuditResultDto, UnAuditInput } from '../exam/datacontract/sampletest-datacontract'
 import { ExamInfoOutput } from '../shared/datacontract/examinfo-datacontract'
 import { ExamSpecialResultListOutput, ExamSpecialResultQueryListInput } from '../shared/datacontract/examspecialresult-datacontract'
+import { ExamPathologySamplingSpotOutput, ExamPathologySamplingSpotUpdateInput } from './datacontract/exampathologysamplingspot-datacontract'
 import { PathologyBackInput, PathologyExamListQueryInput, PathologyReceiveInput, SaveResultInput } from './datacontract/pathologytest-datacontract'
 import { ContentType, HttpClient, RequestParams } from '/@/api/admin/http-client'
 import { ResultBaseOutput } from '/@/api/lims/basedata/datacontract/base'
@@ -158,6 +159,48 @@ export class PathologyTestApi<SecurityDataType = unknown> extends HttpClient<Sec
   ) =>
     this.request<ResultBaseOutput<Array<UserGetOptionOutput>>, any>({
       path: `/api/pathology/pathology-test/get-pathology-second-audit-users`,
+      method: 'GET',
+      query: query,
+      secure: true,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name saveSamplingSpotDetail
+   * @summary 保存取材部位明细
+   * @request POST:/api/pathology/pathology-test/save-sampling-spot-detail
+   * @secure
+   */
+  saveSamplingSpotDetail = (data: ExamPathologySamplingSpotUpdateInput[], params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<boolean>, any>({
+      path: `/api/pathology/pathology-test/save-sampling-spot-detail`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
+   * @name getSamplingSpotDetail
+   * @summary 获取取材部位明细
+   * @request GET:/api/pathology/pathology-test/get-sampling-spot-detail
+   * @secure
+   */
+  getSamplingSpotDetail = (
+    query?: {
+      examInfoId?: number
+    },
+    params: RequestParams = {}
+  ) =>
+    this.request<ResultBaseOutput<Array<ExamPathologySamplingSpotOutput>>, any>({
+      path: `/api/pathology/pathology-test/get-sampling-spot-detail`,
       method: 'GET',
       query: query,
       secure: true,

@@ -5,7 +5,7 @@
         <div class="table-container">
           <MyTable class="my-table" :show-paging="false" :show-toolbox="false" :data="state.samplingSpotList">
             <template #headerButton>
-              <el-button type="primary" size="small" @click="onAddSamplingSpotDetail">
+              <el-button type="primary" :disabled="!state.editable" size="small" @click="onAddSamplingSpotDetail">
                 <SvgIcon name="ele-Plus" />
                 新增</el-button
               >
@@ -18,6 +18,7 @@
                   size="small"
                   filterable
                   clearable
+                  :disabled="!state.editable"
                   remote
                   :remote-method="querySamplingSpotOptions"
                   style="width: 100%"
@@ -88,20 +89,26 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, onMounted, nextTick } from 'vue'
-import MyTable from '/@/components/my-table/index.vue'
-import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
-import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
+import { nextTick, onMounted, reactive, ref } from 'vue'
+import { LabelValueOutput } from '/@/api/admin/data-contracts'
+import {
+  ExamPathologySamplingSpotOutput,
+  ExamPathologySamplingSpotUpdateInput,
+} from '/@/api/lims/pathology/datacontract/exampathologysamplingspot-datacontract'
 import { GrossExaminationResult } from '/@/api/lims/pathology/datacontract/pathologyresult-datacontract'
 import { BasePathologySamplingSpotDetailOutput } from '/@/api/lims/pathology/datacontract/pathologysamplingspotdetail-datacontract'
 import { GrossExaminationTemplateOutput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
+import { SaveResultInput } from '/@/api/lims/pathology/datacontract/pathologytest-datacontract'
 import { BasePathologySamplingSpotApi } from '/@/api/lims/pathology/pathologysamplingspot'
-import { BasePathologySampleTypeApi } from '/@/api/lims/pathology/pathologysampletype'
-import { BasePathologySamplingSpotOutput } from '/@/api/lims/pathology/datacontract/pathologysamplingspot-datacontract'
-import { BasePathologySampleTypeOutput } from '/@/api/lims/pathology/datacontract/pathologysampletype-datacontract'
-import { BaseOptionsApi } from '/@/api/lims/shared/options'
-import { LabelValueOutput } from '/@/api/admin/data-contracts'
 import { BasePathologyTemplateApi } from '/@/api/lims/pathology/pathologytemplate'
+import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
+import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
+import { ExamSpecialResultListOutput } from '/@/api/lims/shared/datacontract/examspecialresult-datacontract'
+import { PathologyAuditTypeEnum } from '/@/api/lims/shared/enums/pathologyaudittypeenum'
+import { SampleStatus } from '/@/api/lims/shared/enums/samplestatusenum'
+import { BaseOptionsApi } from '/@/api/lims/shared/options'
+import MyTable from '/@/components/my-table/index.vue'
+import modal from '/@/globalProperties/modal'
 import { isBlank } from '/@/utils/toolsValidate'
 
 const props = withDefaults(
@@ -117,23 +124,28 @@ const props = withDefaults(
 
 const state = reactive({
   editable: false,
-  samplingSpotList: [] as BasePathologySamplingSpotDetailOutput[],
+  samplingSpotList: [] as ExamPathologySamplingSpotOutput[],
   samplingSpotOptions: [] as LabelValueOutput[],
   sampleTypeOptions: [] as BasePathologySamplingSpotDetailOutput[],
   formData: {} as GrossExaminationResult,
   examId: -1,
   templateOptions: [] as GrossExaminationTemplateOutput[],
+  currSpecialResultList: [] as ExamSpecialResultListOutput[],
+  currExamInfo: {} as ExamInfoOutput | null,
 })
 
 const onAddSamplingSpotDetail = () => {
+  if (state.examId <= 0) {
+    return
+  }
   state.samplingSpotList.push({
     id: 0,
+    examInfoId: state.examId,
     samplingSpotCode: null,
     sampleTypeCode: null,
     samplingSpotName: null,
     sampleTypeName: null,
     sort: 0,
-    isValid: true,
   })
 }
 const onSelectTemplate = (row: GrossExaminationTemplateOutput) => {
@@ -144,10 +156,13 @@ const onSelectTemplate = (row: GrossExaminationTemplateOutput) => {
       grossExamination: templateObj.diagnosis ?? '',
     }
   } else {
-    state.formData.grossExamination += '\r\n' + templateObj.diagnosis
+    state.formData.grossExamination += '\n' + templateObj.diagnosis
   }
 }
 const querySamplingSpotOptions = (queryString: string) => {
+  if (!queryString) {
+    return
+  }
   new BaseOptionsApi().getSamplingSpotOptions({ pageSize: 20, currentPage: 1, filter: queryString }).then((res) => {
     if (res.success) {
       state.samplingSpotOptions = res.data ?? []
@@ -187,19 +202,62 @@ onMounted(() => {
   })
 })
 
-const refreshData = (examInfoId: number) => {
-  console.log('gross refreshData', examInfoId)
-  state.examId = examInfoId
-  new PathologyTestApi().getSpecialResultList({ examInfoId: examInfoId, resultType: props.resultType }, { showErrorMessage: true }).then((res) => {
-    if (res.data) {
-      const result = res.data.reduce((acc: Record<string, any>, item) => {
-        acc[item.fieldCode!] = item.fieldValue
-        return acc
-      }, {})
-      setResult(result)
-      return res.data ?? []
-    }
-  })
+const refreshData = (examInfo: ExamInfoOutput | null) => {
+  state.currExamInfo = examInfo
+  console.log('gross refreshData', examInfo)
+  if (examInfo == null) {
+    clearResult()
+  } else {
+    state.formData = { grossExamination: '' }
+    state.examId = examInfo?.id ?? -1
+    new PathologyTestApi()
+      .getSpecialResultList({ examInfoId: examInfo?.id ?? -1, resultType: props.resultType }, { showErrorMessage: true })
+      .then((res) => {
+        if (res.data) {
+          state.currSpecialResultList = res.data ?? []
+          const result = res.data.reduce((acc: Record<string, any>, item) => {
+            acc[item.fieldCode!] = item.fieldValue
+            return acc
+          }, {})
+          setResult(result)
+        } else {
+          state.currSpecialResultList = []
+          setResult([])
+        }
+      })
+
+    new PathologyTestApi().getSamplingSpotDetail({ examInfoId: examInfo?.id ?? -1 }).then((res) => {
+      if (res.success) {
+        state.samplingSpotList = res.data ?? []
+        if (state.samplingSpotList.length > 0) {
+          if (state.samplingSpotOptions.findIndex((i) => i.value == state.samplingSpotList[0].samplingSpotCode!) == -1) {
+            state.samplingSpotOptions.push({
+              label: state.samplingSpotList[0].samplingSpotName!,
+              value: state.samplingSpotList[0].samplingSpotCode!,
+            })
+          }
+          if (state.sampleTypeOptions.findIndex((i) => i.sampleTypeCode == state.samplingSpotList[0].sampleTypeCode!) == -1) {
+            state.sampleTypeOptions.push({
+              id: 0,
+              sampleTypeName: state.samplingSpotList[0].sampleTypeName!,
+              sampleTypeCode: state.samplingSpotList[0].sampleTypeCode!,
+            })
+          }
+          refreshTemplate()
+        }
+      }
+    })
+    var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
+    setEditable(editable)
+  }
+}
+const clearResult = () => {
+  state.formData.grossExamination = ''
+  state.examId = 0
+  state.currSpecialResultList = []
+  state.samplingSpotList = []
+  state.templateOptions = []
+  state.currExamInfo = null
 }
 const setResult = (result: any) => {
   console.log('设置结果:', result)
@@ -217,6 +275,75 @@ const setEditable = (editable: boolean) => {
   state.editable = editable
 }
 
+const saveResult = (examInfoId: number): Promise<any> => {
+  return new Promise((resolve, reject) => {
+    const result = state.formData
+    if (!result || Object.keys(result).length === 0) {
+      resolve(null)
+      return
+    }
+    let param = {
+      examInfoId: examInfoId,
+      resultType: props.resultType,
+    } as SaveResultInput
+
+    const buildAndSave = (specialResultList: ExamSpecialResultListOutput[]) => {
+      if (specialResultList.length > 0) {
+        specialResultList.forEach((item) => {
+          item.fieldValue = (result as any)[item.fieldCode!] ?? item.fieldValue
+        })
+      } else {
+        for (let key in result) {
+          specialResultList.push({
+            fieldCode: key,
+            fieldValue: (result as any)[key],
+            resultType: props.resultType,
+            examInfoId: examInfoId,
+            barcode: state.currExamInfo?.barcode ?? '',
+            groupCode: state.currExamInfo?.groupCode ?? '',
+            sampleNo: state.currExamInfo?.sampleNo ?? '',
+            testDate: state.currExamInfo?.testDate ?? '',
+          } as ExamSpecialResultListOutput)
+        }
+      }
+      param.specialResultList = specialResultList
+      new PathologyTestApi()
+        .saveResult(param, { showErrorMessage: true })
+        .then((res) => {
+          if (res.success) {
+            state.currSpecialResultList = specialResultList
+            resolve(res)
+          } else {
+            reject(res)
+          }
+        })
+        .catch((err) => reject(err))
+    }
+
+    if (state.currSpecialResultList?.length > 0) {
+      buildAndSave([...state.currSpecialResultList])
+    } else {
+      new PathologyTestApi()
+        .getSpecialResultList({ examInfoId: examInfoId, resultType: props.resultType }, { showErrorMessage: true })
+        .then((res) => {
+          if (res.data && res.data.length > 0) {
+            state.currSpecialResultList = res.data
+            buildAndSave([...res.data])
+          } else {
+            buildAndSave([])
+          }
+        })
+        .catch(() => buildAndSave([]))
+    }
+    let spotParam = state.samplingSpotList as ExamPathologySamplingSpotUpdateInput[]
+    new PathologyTestApi().saveSamplingSpotDetail(spotParam).then((res) => {
+      if (!res.success) {
+        modal.msgError(res.msg)
+      }
+    })
+  })
+}
+
 // #region 【】标记导航
 const grossInputRef = ref()
 
@@ -228,6 +355,7 @@ function findBrackets(text: string): { start: number; end: number }[] {
   while ((match = regex.exec(text)) !== null) {
     result.push({ start: match.index, end: match.index + match[0].length })
   }
+  console.log('result', result)
   return result
 }
 
@@ -312,6 +440,7 @@ defineExpose({
   refreshData,
   setEditable,
   getResult,
+  saveResult,
 })
 </script>
 
