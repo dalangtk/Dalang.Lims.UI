@@ -36,6 +36,14 @@
               <SvgIcon name="ele-Delete" />
             </el-button>
           </div>
+          <div class="image-zooms" v-if="state.editable">
+            <el-select v-model="item.zoomCode" size="small" filterable @change="updateImage(item)">
+              <el-option v-for="item in state.zoomList" :key="item.code" :label="item.name" :value="item.code" />
+            </el-select>
+            <el-select v-model="item.antiBodyCode" size="small" filterable @change="updateImage(item)">
+              <el-option v-for="item in state.antiBodyList" :key="item.code" :label="item.name" :value="item.code" />
+            </el-select>
+          </div>
         </div>
       </div>
     </div>
@@ -46,12 +54,14 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, computed, ref } from 'vue'
-import { ExamImagesOutput } from '/@/api/lims/exam/datacontract/examimages-datacontract'
+import { reactive, computed, ref, onMounted } from 'vue'
+import { ExamImagesOutput, ExamImagesUpdateInput } from '/@/api/lims/exam/datacontract/examimages-datacontract'
 import { useUserInfo } from '/@/stores/userInfo'
 import type { TabPaneName, UploadFile, UploadFiles, UploadInstance, UploadProps } from 'element-plus'
 import modal from '/@/globalProperties/modal'
 import { ExamImagesApi } from '/@/api/lims/exam/examimages'
+import { DictGetListDto } from '/@/api/admin/data-contracts'
+import { DictApi } from '/@/api/admin/Dict'
 
 const props = withDefaults(
   defineProps<{
@@ -76,8 +86,15 @@ const state = reactive({
   editable: true,
   token: storesUserInfo.getToken(),
   examInfoId: -1,
+  zoomList: [] as DictGetListDto[] | null,
+  antiBodyList: [] as DictGetListDto[] | null,
 })
-
+onMounted(async () => {
+  await new DictApi().getList(['Zoom', 'AntiBody']).then((res) => {
+    state.antiBodyList = res.data!.zoom
+    state.zoomList = res.data!.antiBody
+  })
+})
 const previewList = computed(() => state.list.map((item) => item.fileUrl ?? ''))
 
 const setEditable = (editable: boolean) => {
@@ -150,7 +167,13 @@ const refreshData = (examInfoId: number) => {
       }
     })
 }
-
+const updateImage = (row: ExamImagesOutput) => {
+  new ExamImagesApi().update(row as ExamImagesUpdateInput, { loading: true, showSuccessMessage: true }).then(() => {
+    row.originalAntiCode = row.antiBodyCode
+    row.originalZoomCode = row.zoomCode
+    row.originalIsShow = row.isShow
+  })
+}
 defineExpose({
   setEditable,
   refreshData,
@@ -215,6 +238,12 @@ defineExpose({
 }
 .image-wrapper:hover .image-actions {
   opacity: 1;
+}
+.image-zooms {
+  margin-top: 2px;
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
 }
 .images-empty {
   flex: 1;
