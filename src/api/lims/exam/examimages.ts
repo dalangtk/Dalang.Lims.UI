@@ -65,7 +65,8 @@ export class ExamImagesApi<SecurityDataType = unknown> extends HttpClient<Securi
   getAll = (
     query?: {
       /** @format int64 */
-      examInfoId?: number
+      examInfoId?: number,
+      isGrossExamination?: boolean,
     },
     params: RequestParams = {}
   ) =>

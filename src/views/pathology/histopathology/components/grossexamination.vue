@@ -73,7 +73,9 @@
           @keydown.left.prevent="handleLeftKey"
         ></el-input>
       </div>
-      <div class="right"></div>
+      <div class="right">
+        <PathologyImages ref="imagesRef" :editable="state.editable" :is-gross-examination="true" />
+      </div>
     </div>
     <div class="record">
       <el-form inline size="small" label-width="60px">
@@ -110,6 +112,9 @@ import { BaseOptionsApi } from '/@/api/lims/shared/options'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { isBlank } from '/@/utils/toolsValidate'
+import PathologyImages from '/@/views/pathology/components/pathologyimages.vue'
+import { ExamImagesApi } from '/@/api/lims/exam/examimages'
+import { ExamImagesOutput } from '/@/api/lims/exam/datacontract/examimages-datacontract'
 
 const props = withDefaults(
   defineProps<{
@@ -247,6 +252,7 @@ const refreshData = (examInfo: ExamInfoOutput | null) => {
         }
       }
     })
+    imagesRef.value?.refreshData(examInfo?.id ?? -1)
     var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
     setEditable(editable)
   }
@@ -258,6 +264,7 @@ const clearResult = () => {
   state.samplingSpotList = []
   state.templateOptions = []
   state.currExamInfo = null
+  imagesRef.value?.refreshData(-1)
 }
 const setResult = (result: any) => {
   console.log('设置结果:', result)
@@ -346,6 +353,16 @@ const saveResult = (examInfoId: number): Promise<any> => {
 
 // #region 【】标记导航
 const grossInputRef = ref()
+const imagesRef = ref()
+
+const onImageUpload = () => {
+  // TODO: 实现上传图片逻辑
+  console.log('上传图片', state.examId)
+}
+const onImageDelete = (item: ExamImagesOutput, index: number) => {
+  // TODO: 实现删除图片逻辑
+  console.log('删除图片', item, index)
+}
 
 /** 在文本中查找所有【】标记的位置 */
 function findBrackets(text: string): { start: number; end: number }[] {
@@ -479,6 +496,11 @@ defineExpose({
 .right {
   width: 30%;
   background-color: #eeeeee;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 4px;
+  box-sizing: border-box;
 }
 .record {
   width: 100%;
