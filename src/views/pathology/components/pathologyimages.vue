@@ -1,7 +1,7 @@
 <template>
   <div class="pathology-images">
     <div class="images-header">
-      <span class="images-title">图片({{ state.list.length }})</span>
+      <span class="images-title">数量：{{ state.list.length }}</span>
       <el-upload
         style="width: 35px; height: 20px; margin-right: 25px"
         ref="uploadRef"

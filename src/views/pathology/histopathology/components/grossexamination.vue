@@ -3,7 +3,7 @@
     <div class="gross-examination">
       <div class="left">
         <div class="table-container">
-          <MyTable class="my-table" :show-paging="false" :show-toolbox="false" :data="state.samplingSpotList">
+          <MyTable class="my-table" size="small" :show-paging="false" :show-toolbox="false" :data="state.samplingSpotList">
             <template #headerButton>
               <el-button type="primary" :disabled="!state.editable" size="small" @click="onAddSamplingSpotDetail">
                 <SvgIcon name="ele-Plus" />
@@ -51,7 +51,7 @@
           </MyTable>
         </div>
         <div class="table-container">
-          <MyTable :data="state.templateOptions" class="my-table" :show-paging="false" :show-toolbox="false">
+          <MyTable :data="state.templateOptions" size="small" class="my-table" :show-paging="false" :show-toolbox="false">
             <el-table-column label="二级标本" prop="sampleTypeName"></el-table-column>
             <el-table-column label="模板名称" prop="templateName"></el-table-column>
             <el-table-column label="操作" fixed="right">
@@ -74,7 +74,41 @@
         ></el-input>
       </div>
       <div class="right">
-        <PathologyImages ref="imagesRef" :editable="state.editable" :is-gross-examination="true" />
+        <el-tabs v-model="state.activeTab">
+          <el-tab-pane label="图片" name="image">
+            <PathologyImages ref="imagesRef" :editable="state.editable" :is-gross-examination="true" />
+          </el-tab-pane>
+          <el-tab-pane label="蜡块" name="candle">
+            <MyTable :data="state.candleList" size="small" class="my-table" :show-paging="false" :show-toolbox="false">
+              <template #headerButton>
+                <el-button type="primary" :disabled="!state.editable" size="small" @click="addCandle">
+                  <SvgIcon name="ele-Plus" />
+                  新增</el-button
+                >
+              </template>
+              <el-table-column label="蜡块编号" prop="candleNo">
+                <template #default="{ row }">
+                  <el-input v-model="row.candleNo" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="部位" prop="position">
+                <template #default="{ row }">
+                  <el-input v-model="row.position" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="数量" prop="amount">
+                <template #default="{ row }">
+                  <el-input v-model="row.amount" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column width="60" label="操作" fixed="right">
+                <template #default="{ row }">
+                  <el-button size="small" text type="primary" @click="deleteCandle(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </MyTable>
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </div>
     <div class="record">
@@ -115,6 +149,8 @@ import { isBlank } from '/@/utils/toolsValidate'
 import PathologyImages from '/@/views/pathology/components/pathologyimages.vue'
 import { ExamImagesApi } from '/@/api/lims/exam/examimages'
 import { ExamImagesOutput } from '/@/api/lims/exam/datacontract/examimages-datacontract'
+import { ExamPathologyCandleOutput } from '/@/api/lims/pathology/datacontract/exampathologycandle-datacontract'
+import { ExamPathologyCandleApi } from '/@/api/lims/pathology/exampathologycandle'
 
 const props = withDefaults(
   defineProps<{
@@ -128,6 +164,7 @@ const props = withDefaults(
 )
 
 const state = reactive({
+  activeTab: 'image',
   editable: false,
   samplingSpotList: [] as ExamPathologySamplingSpotOutput[],
   samplingSpotOptions: [] as LabelValueOutput[],
@@ -137,6 +174,7 @@ const state = reactive({
   templateOptions: [] as GrossExaminationTemplateOutput[],
   currSpecialResultList: [] as ExamSpecialResultListOutput[],
   currExamInfo: {} as ExamInfoOutput | null,
+  candleList: [] as ExamPathologyCandleOutput[],
 })
 
 const onAddSamplingSpotDetail = () => {
@@ -154,7 +192,6 @@ const onAddSamplingSpotDetail = () => {
   })
 }
 const onSelectTemplate = (row: GrossExaminationTemplateOutput) => {
-  console.log('选择模板', row)
   let templateObj = JSON.parse(row.templateContent ?? '{}')
   if (isBlank(state.formData?.grossExamination)) {
     state.formData = {
@@ -191,8 +228,7 @@ const onSampleTypeChange = (row: BasePathologySamplingSpotDetailOutput, name: st
 }
 const refreshTemplate = () => {
   let sampleTypeCodes = state.samplingSpotList.map((i) => i.sampleTypeCode!)
-  console.log(sampleTypeCodes)
-  // return
+
   new BasePathologyTemplateApi().getGrossExaminationTemplate({ sampleTypeCodes: sampleTypeCodes }).then((res) => {
     if (res.success) {
       state.templateOptions = res.data ?? []
@@ -209,7 +245,6 @@ onMounted(() => {
 
 const refreshData = (examInfo: ExamInfoOutput | null) => {
   state.currExamInfo = examInfo
-  console.log('gross refreshData', examInfo)
   if (examInfo == null) {
     clearResult()
   } else {
@@ -256,18 +291,32 @@ const refreshData = (examInfo: ExamInfoOutput | null) => {
     var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
     setEditable(editable)
   }
+  refreshCandle()
 }
+
+const refreshCandle = () => {
+  if (state.examId <= 0) {
+    state.candleList = []
+    return
+  }
+  new ExamPathologyCandleApi().getCandles({ examInfoId: state.examId }).then((res) => {
+    if (res.success) {
+      state.candleList = res.data ?? []
+    }
+  })
+}
+
 const clearResult = () => {
   state.formData.grossExamination = ''
   state.examId = 0
   state.currSpecialResultList = []
   state.samplingSpotList = []
   state.templateOptions = []
+  state.candleList = []
   state.currExamInfo = null
   imagesRef.value?.refreshData(-1)
 }
 const setResult = (result: any) => {
-  console.log('设置结果:', result)
   if (!state.formData.grossExamination) {
     state.formData = {
       grossExamination: result?.grossExamination ?? '',
@@ -278,7 +327,6 @@ const getResult = () => {
   return state.formData
 }
 const setEditable = (editable: boolean) => {
-  console.log('gross setEditable', editable)
   state.editable = editable
 }
 
@@ -289,6 +337,27 @@ const saveResult = (examInfoId: number): Promise<any> => {
       resolve(null)
       return
     }
+    //判断蜡块号有没有重复，有重复不让保存
+    const seen = new Set<number>()
+    let firstDuplicate: number | null = null
+    for (const item of state.candleList) {
+      if (!item.candleNo) {
+        modal.alertError('蜡块号不能为空!')
+        resolve(null)
+        return
+      }
+      if (seen.has(item.candleNo!)) {
+        firstDuplicate = item.candleNo
+        break
+      }
+      seen.add(item.candleNo!)
+    }
+    if (firstDuplicate) {
+      modal.alertError(`蜡块号${firstDuplicate}重复!`)
+      resolve(null)
+      return
+    }
+
     let param = {
       examInfoId: examInfoId,
       resultType: props.resultType,
@@ -348,21 +417,54 @@ const saveResult = (examInfoId: number): Promise<any> => {
         modal.msgError(res.msg)
       }
     })
+
+    new ExamPathologyCandleApi().saveCandles(state.candleList).then((res) => {
+      if (!res.success) {
+        modal.msgError(res.msg)
+      }
+    })
   })
+}
+
+const addCandle = () => {
+  //candleNo取当前列表最大candleNo+1
+  let maxCandleNo = state.candleList.reduce((max, item) => Math.max(max, item.candleNo ?? 0), 0)
+  let candleNo = maxCandleNo + 1
+  state.candleList.push({
+    id: 0,
+    examInfoId: state.examId,
+    candleNo: candleNo,
+    originalCandleNo: '',
+    position: '',
+    amount: 1,
+    operationType: 0,
+    estimatedSamplingDate: new Date(),
+  })
+}
+
+const deleteCandle = (row: ExamPathologyCandleOutput) => {
+  if (row.id <= 0) {
+    const index = state.candleList.indexOf(row)
+    if (index > -1) {
+      state.candleList.splice(index, 1)
+    }
+    return
+  }
+  modal
+    .confirmDelete(`确定要删除蜡块【${row.candleNo}】?`, null)
+    .then(async () => {
+      new ExamPathologyCandleApi().delete({ id: row.id }).then((res) => {
+        if (res.success) {
+          refreshCandle()
+        }
+      })
+    })
+    .catch(() => {})
 }
 
 // #region 【】标记导航
 const grossInputRef = ref()
 const imagesRef = ref()
-
-const onImageUpload = () => {
-  // TODO: 实现上传图片逻辑
-  console.log('上传图片', state.examId)
-}
-const onImageDelete = (item: ExamImagesOutput, index: number) => {
-  // TODO: 实现删除图片逻辑
-  console.log('删除图片', item, index)
-}
 
 /** 在文本中查找所有【】标记的位置 */
 function findBrackets(text: string): { start: number; end: number }[] {
@@ -372,7 +474,6 @@ function findBrackets(text: string): { start: number; end: number }[] {
   while ((match = regex.exec(text)) !== null) {
     result.push({ start: match.index, end: match.index + match[0].length })
   }
-  console.log('result', result)
   return result
 }
 
@@ -495,12 +596,26 @@ defineExpose({
 
 .right {
   width: 30%;
-  background-color: #eeeeee;
   display: flex;
   flex-direction: column;
   min-height: 0;
   padding: 4px;
   box-sizing: border-box;
+
+  :deep(.el-tabs) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  :deep(.el-tabs__content) {
+    flex: 1;
+    min-height: 0;
+  }
+  :deep(.el-tab-pane) {
+    height: 100%;
+    overflow: hidden;
+  }
 }
 .record {
   width: 100%;
