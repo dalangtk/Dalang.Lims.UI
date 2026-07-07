@@ -20,4 +20,12 @@ export interface TctResult {
 }
 export interface GrossExaminationResult {
   grossExamination: string | null
+  recorder: string | null
+  samplingDoctor: string | null
+}
+export interface HistopathologyResult {
+  diagnosis: string | null
+  grossExamination: string | null
+  microscopicExamination: string | null
+  remarks: string | null
 }

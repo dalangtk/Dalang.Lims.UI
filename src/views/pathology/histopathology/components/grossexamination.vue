@@ -101,6 +101,11 @@
                   <el-input v-model="row.amount" size="small" />
                 </template>
               </el-table-column>
+              <el-table-column label="原蜡块号" prop="originalCandleNo">
+                <template #default="{ row }">
+                  <el-input v-model="row.originalCandleNo" size="small" />
+                </template>
+              </el-table-column>
               <el-table-column width="60" label="操作" fixed="right">
                 <template #default="{ row }">
                   <el-button size="small" text type="primary" @click="deleteCandle(row)">删除</el-button>
@@ -114,10 +119,10 @@
     <div class="record">
       <el-form inline size="small" label-width="60px">
         <el-form-item label="记录员">
-          <el-input></el-input>
+          <el-input v-model="state.formData.recorder"></el-input>
         </el-form-item>
         <el-form-item label="取材医生">
-          <el-input></el-input>
+          <el-input v-model="state.formData.samplingDoctor"></el-input>
         </el-form-item>
       </el-form>
     </div>
@@ -164,7 +169,7 @@ const props = withDefaults(
 )
 
 const state = reactive({
-  activeTab: 'image',
+  activeTab: 'candle',
   editable: false,
   samplingSpotList: [] as ExamPathologySamplingSpotOutput[],
   samplingSpotOptions: [] as LabelValueOutput[],
@@ -194,9 +199,7 @@ const onAddSamplingSpotDetail = () => {
 const onSelectTemplate = (row: GrossExaminationTemplateOutput) => {
   let templateObj = JSON.parse(row.templateContent ?? '{}')
   if (isBlank(state.formData?.grossExamination)) {
-    state.formData = {
-      grossExamination: templateObj.diagnosis ?? '',
-    }
+    state.formData.grossExamination = templateObj.diagnosis ?? ''
   } else {
     state.formData.grossExamination += '\n' + templateObj.diagnosis
   }
@@ -248,7 +251,7 @@ const refreshData = (examInfo: ExamInfoOutput | null) => {
   if (examInfo == null) {
     clearResult()
   } else {
-    state.formData = { grossExamination: '' }
+    state.formData = { grossExamination: '', recorder: '', samplingDoctor: '' }
     state.examId = examInfo?.id ?? -1
     new PathologyTestApi()
       .getSpecialResultList({ examInfoId: examInfo?.id ?? -1, resultType: props.resultType }, { showErrorMessage: true })
@@ -318,9 +321,9 @@ const clearResult = () => {
 }
 const setResult = (result: any) => {
   if (!state.formData.grossExamination) {
-    state.formData = {
-      grossExamination: result?.grossExamination ?? '',
-    }
+    state.formData.grossExamination = result?.grossExamination ?? ''
+    state.formData.recorder = result?.recorder ?? ''
+    state.formData.samplingDoctor = result?.samplingDoctor ?? ''
   }
 }
 const getResult = () => {
