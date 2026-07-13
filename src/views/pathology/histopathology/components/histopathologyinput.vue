@@ -56,6 +56,22 @@
             <el-table-column label="部位" prop="position"></el-table-column>
           </MyTable>
         </div>
+        <div class="table-container">
+          <MyTable :data="state.slicingList" size="small" class="my-table" :show-paging="false" :show-toolbox="false">
+            <template #headerButton>
+              <el-button type="primary" :disabled="!state.editable" size="small" @click="onUploadSlicing">
+                <SvgIcon name="ele-Upload" />
+                上传</el-button
+              >
+            </template>
+            <el-table-column label="切片名称" prop="slicingName"></el-table-column>
+            <el-table-column label="操作" width="60" fixed="right">
+              <template #default="{ row }">
+                <el-button size="small" text type="primary" @click="onViewSlicing(row)">查看</el-button>
+              </template>
+            </el-table-column>
+          </MyTable>
+        </div>
       </div>
       <div class="center">
         <div class="grid-2x2">
@@ -116,6 +132,8 @@
       </div>
     </div>
   </div>
+
+  <DigitalSlicingDialog ref="digitalSlicingDialogRef" />
 </template>
 
 <script lang="ts" setup>
@@ -145,6 +163,9 @@ import { ExamPathologyCandleOutput } from '/@/api/lims/pathology/datacontract/ex
 import { ExamPathologyCandleApi } from '/@/api/lims/pathology/exampathologycandle'
 import { ExamPathologySectionOutput } from '/@/api/lims/pathology/datacontract/exampathologysection-datacontract'
 import { ExamPathologySectionApi } from '/@/api/lims/pathology/exampathologysection'
+import { ExamPathologyDigitalSlicingOutput } from '/@/api/lims/pathology/datacontract/exampathologydigitalslicing-datacontract'
+import { ExamPathologyDigitalSlicingApi } from '/@/api/lims/pathology/exampathologydigitalslicing'
+import DigitalSlicingDialog from '/@/views/pathology/components/digitalslicingdialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -156,6 +177,8 @@ const props = withDefaults(
     resultType: 1,
   }
 )
+
+const digitalSlicingDialogRef = ref()
 
 const state = reactive({
   activeTab: 'image',
@@ -170,6 +193,7 @@ const state = reactive({
   currExamInfo: {} as ExamInfoOutput | null,
   candleList: [] as ExamPathologyCandleOutput[],
   sectionList: [] as ExamPathologySectionOutput[],
+  slicingList: [] as ExamPathologyDigitalSlicingOutput[],
 })
 
 const onAddSamplingSpotDetail = () => {
@@ -285,6 +309,11 @@ const refreshData = (examInfo: ExamInfoOutput | null) => {
         state.sectionList = res.data ?? []
       }
     })
+    new ExamPathologyDigitalSlicingApi().getList({ examInfoId: examInfo?.id ?? -1 }).then((res) => {
+      if (res.success) {
+        state.slicingList = res.data ?? []
+      }
+    })
     imagesRef.value?.refreshData(examInfo?.id ?? -1)
     var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
     setEditable(editable)
@@ -311,6 +340,8 @@ const clearResult = () => {
   state.samplingSpotList = []
   state.templateOptions = []
   state.candleList = []
+  state.sectionList = []
+  state.slicingList = []
   state.currExamInfo = null
   imagesRef.value?.refreshData(-1)
 }
@@ -460,6 +491,17 @@ const deleteCandle = (row: ExamPathologyCandleOutput) => {
     .catch(() => {})
 }
 
+// #region 数字切片
+const onUploadSlicing = () => {
+  // TODO: 上传数字切片，由用户自行实现
+}
+const onViewSlicing = (row: ExamPathologyDigitalSlicingOutput) => {
+  // TODO: 查看数字切片
+  console.log('111')
+  digitalSlicingDialogRef.value.showDialog(row.id)
+}
+// #endregion
+
 const imagesRef = ref()
 
 defineExpose({
@@ -487,7 +529,7 @@ defineExpose({
   width: 22%;
 }
 .table-container {
-  height: 50%;
+  height: 33.33%;
   display: flex;
   flex-direction: column;
 }

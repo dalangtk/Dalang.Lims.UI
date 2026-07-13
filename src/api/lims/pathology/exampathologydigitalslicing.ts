@@ -33,6 +33,25 @@ export class ExamPathologyDigitalSlicingApi<SecurityDataType = unknown> extends 
    * No description
    *
    * @tags pathology
+   * @name GetList
+   * @summary 查询列表
+   * @request POST:/api/pathology/exam-pathology-digital-slicing/get-list
+   * @secure
+   */
+  getList = (data: ExamPathologyDigitalSlicingQueryListInput, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<ExamPathologyDigitalSlicingListOutput[]>, any>({
+      path: `/api/pathology/exam-pathology-digital-slicing/get-list`,
+      method: 'POST',
+      body: data,
+      secure: true,
+      type: ContentType.Json,
+      format: 'json',
+      ...params,
+    })
+  /**
+   * No description
+   *
+   * @tags pathology
    * @name Get
    * @summary 查询数字切片
    * @request GET:/api/pathology/exam-pathology-digital-slicing/get

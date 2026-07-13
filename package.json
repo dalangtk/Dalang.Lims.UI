@@ -33,6 +33,7 @@
     "lodash-es": "^4.17.21",
     "mitt": "^3.0.1",
     "nprogress": "^0.2.0",
+    "openseadragon": "^5.0.1",
     "pinia": "^2.1.7",
     "print-js": "^1.6.0",
     "qrcodejs2-fixes": "^0.0.2",
