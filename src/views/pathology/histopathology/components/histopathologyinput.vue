@@ -96,7 +96,7 @@
       <div class="right">
         <el-tabs v-model="state.activeTab">
           <el-tab-pane label="图片" name="image">
-            <PathologyImages ref="imagesRef" :editable="state.editable" :is-gross-examination="true" />
+            <PathologyImages ref="imagesRef" :editable="state.editable" :is-gross-examination="true" :result-type="props.resultType" />
           </el-tab-pane>
           <el-tab-pane label="蜡块" name="candle">
             <MyTable :data="state.candleList" size="small" class="my-table" :show-paging="false" :show-toolbox="false">
@@ -174,7 +174,7 @@ const props = withDefaults(
   }>(),
   {
     auditType: PathologyAuditTypeEnum.FirstAudit,
-    resultType: 1,
+    resultType: 3,
   }
 )
 
@@ -314,7 +314,7 @@ const refreshData = (examInfo: ExamInfoOutput | null) => {
         state.slicingList = res.data ?? []
       }
     })
-    imagesRef.value?.refreshData(examInfo?.id ?? -1)
+    imagesRef.value?.refreshData(examInfo)
     var editable = examInfo.sampleStatus == SampleStatus.Testing || (props.resultType == 2 && examInfo.sampleStatus == SampleStatus.FirstCheck)
     setEditable(editable)
   }
@@ -343,7 +343,7 @@ const clearResult = () => {
   state.sectionList = []
   state.slicingList = []
   state.currExamInfo = null
-  imagesRef.value?.refreshData(-1)
+  imagesRef.value?.refreshData(null)
 }
 const setResult = (result: any) => {
   state.formData.diagnosis = result?.diagnosis ?? ''

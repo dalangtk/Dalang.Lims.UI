@@ -26,6 +26,10 @@
           上传</el-button
         >
       </el-upload>
+      <el-button size="small" type="primary" @click="snapShot">
+        <SvgIcon name="ele-Upload" />
+        拍图</el-button
+      >
     </div>
     <div class="images-body" v-if="state.list.length > 0">
       <div class="image-item" v-for="(item, index) in state.list" :key="item.id ?? index">
@@ -62,15 +66,22 @@ import modal from '/@/globalProperties/modal'
 import { ExamImagesApi } from '/@/api/lims/exam/examimages'
 import { DictGetListDto } from '/@/api/admin/data-contracts'
 import { DictApi } from '/@/api/admin/Dict'
+import { useWebSocket } from '/@/composables/useWebSocket'
+import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
+import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
+
+const { isConnected, sendMessage, onMessage } = useWebSocket()
 
 const props = withDefaults(
   defineProps<{
     editable?: boolean
     isGrossExamination?: boolean
+    resultType?: number
   }>(),
   {
     editable: true,
     isGrossExamination: false,
+    resultType: 1,
   }
 )
 const uploadRef = ref<UploadInstance>()
@@ -86,6 +97,7 @@ const state = reactive({
   editable: true,
   token: storesUserInfo.getToken(),
   examInfoId: -1,
+  examInfo: {} as null | ExamInfoOutput,
   zoomList: [] as DictGetListDto[] | null,
   antiBodyList: [] as DictGetListDto[] | null,
 })
@@ -126,7 +138,7 @@ const onError: UploadProps['onError'] = (error) => {
 const onSuccess: UploadProps['onSuccess'] = (response: any, uploadFile: UploadFile, uploadFiles: UploadFiles) => {
   if (response?.success) {
     modal.msgSuccess('上传成功')
-    refreshData(state.examInfoId)
+    refreshData({ id: state.examInfoId } as ExamInfoOutput)
   } else {
     modal.msgError(response?.msg)
   }
@@ -141,18 +153,24 @@ const onDelete = (item: ExamImagesOutput, index: number) => {
     .confirmDelete(`确定要删除【${item.fileName}】?`, undefined)
     .then(async () => {
       await new ExamImagesApi().delete({ id: item.id }, { loading: true, showSuccessMessage: true })
-      refreshData(state.examInfoId)
+      refreshData({ id: state.examInfoId } as ExamInfoOutput)
     })
     .catch(() => {})
 }
 
-const refreshData = (examInfoId: number) => {
-  state.examInfoId = examInfoId
-  if (!examInfoId || examInfoId <= 0) {
+const refreshData = (examInfo: ExamInfoOutput) => {
+  state.examInfo = examInfo
+  state.examInfoId = examInfo?.id ?? -1
+
+  refreshImageList()
+  send(MessageType.changeExam)
+}
+
+const refreshImageList = () => {
+  if (!state.examInfoId || state.examInfoId <= 0) {
     state.list = []
     return
   }
-
   new ExamImagesApi()
     .getAll({ examInfoId: state.examInfoId, isGrossExamination: props.isGrossExamination }, { showErrorMessage: true })
     .then((res) => {
@@ -167,6 +185,7 @@ const refreshData = (examInfoId: number) => {
       }
     })
 }
+
 const updateImage = (row: ExamImagesOutput) => {
   new ExamImagesApi().update(row as ExamImagesUpdateInput, { loading: true, showSuccessMessage: true }).then(() => {
     row.originalAntiCode = row.antiBodyCode
@@ -174,6 +193,40 @@ const updateImage = (row: ExamImagesOutput) => {
     row.originalIsShow = row.isShow
   })
 }
+const send = (msgType: MessageType) => {
+  let param = {
+    component: props.resultType.toString(),
+    type: msgType,
+    data: {
+      examInfoId: state.examInfoId,
+      sampleNo: state.examInfo?.sampleNo ?? '',
+      isGrossExamination: props.isGrossExamination ?? false,
+      accessToken: state.token,
+    },
+  } as MessageData
+
+  return sendMessage(param)
+}
+
+const snapShot = () => {
+  if (!send(MessageType.snapShot)) {
+    modal.msgError('拍图命令发送失败！')
+    return
+  }
+}
+// 订阅 WebSocket 消息
+onMessage(
+  (data: MessageResult) => {
+    console.log('PathologyImages收到消息:', data)
+    if (data.success) {
+      console.log(data.type === MessageType.snapShot)
+      if (data.type === MessageType.snapShot) refreshImageList()
+    } else {
+      modal.msgError(data.msg)
+    }
+  },
+  (data: any) => data?.component === props.resultType.toString()
+)
 defineExpose({
   setEditable,
   refreshData,

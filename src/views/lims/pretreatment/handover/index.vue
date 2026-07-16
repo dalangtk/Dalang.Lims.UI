@@ -31,7 +31,7 @@
         <el-button type="primary" size="default" v-if="state.status == '0'" @click="handover" class="operation-btn">交接</el-button>
         <el-button type="primary" size="default" v-if="state.status == '1'" @click="onQuery" class="operation-btn">查询</el-button>
         <el-button type="primary" size="default" v-if="state.status == '1'" @click="printList" class="operation-btn">清单</el-button>
-        <el-button type="primary" size="default" v-if="state.status == '1'" class="operation-btn">打印标签</el-button>
+        <el-button type="primary" size="default" v-if="state.status == '1'" @click="printLabel(null)" class="operation-btn">打印标签</el-button>
       </el-header>
       <el-container class="w100" style="height: calc(100% - 70px)">
         <el-splitter>
@@ -141,6 +141,10 @@ import MySelectTable from '/@/components/my-select-table/index.vue'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { formatDate, parseDate } from '/@/utils/formatTime'
+import { useWebSocket } from '/@/composables/useWebSocket'
+import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
+
+const { isConnected, sendMessage, onMessage } = useWebSocket()
 
 const taskTable = ref()
 const barcodeInput = ref()
@@ -328,6 +332,51 @@ const printList = () => {
     reportDialogRef.value.open()
   })
 }
+
+const printLabel = (dataList: any) => {
+  var selectList = []
+  if (!dataList || dataList.length == 0) {
+    selectList = taskTable.value.getSelectionRows()
+  } else {
+    selectList = dataList
+  }
+
+  if (!selectList || selectList.length == 0) {
+    modal.msgError('请选择要打印的列表！')
+    return
+  }
+  if (!isConnected.value) {
+    modal.msgError('未连接到打印服务，请先检查打印服务！')
+    return
+  }
+
+  let param = {
+    component: 'Handover',
+    type: MessageType.printLabel.toString(),
+    data: selectList,
+    templateName: 'Handover',
+  }
+  console.log(param)
+
+  if (!sendMessage(param)) {
+    modal.msgError('打印作业发送失败！')
+    return
+  }
+  modal.msgSuccess('打印作业发送成功！')
+}
+
+// 订阅 WebSocket 消息
+onMessage(
+  (data: MessageResult) => {
+    console.log('Handover收到消息:', data)
+    if (data.success) {
+      // modal.msgSuccess(data.message)
+    } else {
+      modal.msgError(data.msg)
+    }
+  },
+  (data: any) => data?.component === 'Handover'
+)
 // 状态格式化
 const statusFormatter = (row: any) => {
   return row.sampleStatus === '已分拣' ? '<span class="status-tag sorted">已分拣</span>' : '<span class="status-tag pending">未分拣</span>'
