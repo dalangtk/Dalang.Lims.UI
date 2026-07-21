@@ -17,10 +17,10 @@ import "vxe-pc-ui/es/style.css";
 
 import VxeUITable from "vxe-table";
 import "vxe-table/es/style.css";
-import { wsInstance } from './utils/websocket'
+// import { wsInstance } from './utils/websocket'
 
 const app = createApp(App)
-wsInstance.connect()
+// wsInstance.connect()
 directive(app)
 other.elSvg(app)
 

@@ -562,6 +562,7 @@ defineExpose({
   setEditable,
   getResult,
   saveResult,
+  setResult,
 })
 </script>
 

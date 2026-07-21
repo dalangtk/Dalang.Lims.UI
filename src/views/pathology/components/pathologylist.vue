@@ -390,6 +390,7 @@ const getSpecialResultList = (examId: number) => {
         acc[item.fieldCode!] = item.fieldValue
         return acc
       }, {})
+      console.log('getSpecialResultList',pathologyInputRef.value)
       pathologyInputRef.value.setResult(result)
     }
   })

@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts" name="/pretreatment/handover">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, getCurrentInstance, onBeforeUnmount, nextTick } from 'vue'
 import { CodeNameOutput } from '/@/api/admin/data-contracts'
 import { BaseGroupApi } from '/@/api/lims/basedata/basegroup'
 import { GetPageInput } from '/@/api/lims/basedata/datacontract/base'
@@ -141,10 +141,13 @@ import MySelectTable from '/@/components/my-select-table/index.vue'
 import MyTable from '/@/components/my-table/index.vue'
 import modal from '/@/globalProperties/modal'
 import { formatDate, parseDate } from '/@/utils/formatTime'
-import { useWebSocket } from '/@/composables/useWebSocket'
-import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
+// import { useWebSocket } from '/@/composables/useWebSocket'
+// import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
+import { useFormium } from '/@/utils/useFormium'
+const { sendRequestAsync } = useFormium()
 
-const { isConnected, sendMessage, onMessage } = useWebSocket()
+const { proxy } = getCurrentInstance() as any
+// const { isConnected, sendMessage, onMessage } = useWebSocket()
 
 const taskTable = ref()
 const barcodeInput = ref()
@@ -184,7 +187,32 @@ onMounted(async () => {
     })
   state.queryDateRange[0] = new Date()
   state.queryDateRange[1] = new Date()
+
+  // const formium = proxy.$formium
+  // console.log(formium)
+  // if (!formium) {
+  //   modal.msgError('请先引入 formium 库！')
+  //   return
+  // }
+  // formium.removeMessageHandler('test')
+  // nextTick(() => {
+  //   formium.addMessageHandler('test', (msg: string) => {
+  //     console.log(msg)
+  //   })
+  // })
 })
+
+onBeforeUnmount(() => {
+  // const formium = proxy.$formium
+  // console.log('onBeforeUnmount', formium)
+  // if (!formium) {
+  //   modal.msgError('请先引入 formium 库！')
+  //   return
+  // }
+
+  // formium.removeMessageHandler('test')
+})
+
 const formatterDate = (row: any, column: any, cellValue: any, index: number) => {
   return formatDate(parseDate(cellValue), 'YYYY-mm-dd')
 }
@@ -322,8 +350,6 @@ const printList = () => {
     return
   }
 
-  console.log(selectList)
-
   new ReportTemplateApi().getByCode({ templateCode: 'Handover' }).then((res) => {
     //ReportTemplateOutput
     state.reportTemplate = res.data!
@@ -333,7 +359,7 @@ const printList = () => {
   })
 }
 
-const printLabel = (dataList: any) => {
+const printLabel = async (dataList: any) => {
   var selectList = []
   if (!dataList || dataList.length == 0) {
     selectList = taskTable.value.getSelectionRows()
@@ -345,38 +371,53 @@ const printLabel = (dataList: any) => {
     modal.msgError('请选择要打印的列表！')
     return
   }
-  if (!isConnected.value) {
-    modal.msgError('未连接到打印服务，请先检查打印服务！')
-    return
-  }
-
   let param = {
-    component: 'Handover',
-    type: MessageType.printLabel.toString(),
-    data: selectList,
+    printList: selectList,
     templateName: 'Handover',
   }
-  console.log(param)
+  sendRequestAsync('PrintLabel', param).then((res: any) => {
+    console.log(res)
+    if (res.success) {
+      modal.msgSuccess('打印成功！')
+    } else {
+      modal.msgError('打印失败！' + res.msg)
+    }
+  }).catch((err: any) => {
+    modal.msgError('打印失败！' + err.message)
+  })
+  
+  // if (!isConnected.value) {
+  //   modal.msgError('未连接到打印服务，请先检查打印服务！')
+  //   return
+  // }
 
-  if (!sendMessage(param)) {
-    modal.msgError('打印作业发送失败！')
-    return
-  }
-  modal.msgSuccess('打印作业发送成功！')
+  // let param = {
+  //   component: 'Handover',
+  //   type: MessageType.printLabel.toString(),
+  //   data: selectList,
+  //   templateName: 'Handover',
+  // }
+  // console.log(param)
+
+  // if (!sendMessage(param)) {
+  //   modal.msgError('打印作业发送失败！')
+  //   return
+  // }
+  // modal.msgSuccess('打印作业发送成功！')
 }
 
 // 订阅 WebSocket 消息
-onMessage(
-  (data: MessageResult) => {
-    console.log('Handover收到消息:', data)
-    if (data.success) {
-      // modal.msgSuccess(data.message)
-    } else {
-      modal.msgError(data.msg)
-    }
-  },
-  (data: any) => data?.component === 'Handover'
-)
+// onMessage(
+//   (data: MessageResult) => {
+//     console.log('Handover收到消息:', data)
+//     if (data.success) {
+//       // modal.msgSuccess(data.message)
+//     } else {
+//       modal.msgError(data.msg)
+//     }
+//   },
+//   (data: any) => data?.component === 'Handover'
+// )
 // 状态格式化
 const statusFormatter = (row: any) => {
   return row.sampleStatus === '已分拣' ? '<span class="status-tag sorted">已分拣</span>' : '<span class="status-tag pending">未分拣</span>'

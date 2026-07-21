@@ -58,7 +58,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, computed, ref, onMounted } from 'vue'
+import { reactive, computed, ref, onMounted, getCurrentInstance, nextTick, onBeforeUnmount } from 'vue'
 import { ExamImagesOutput, ExamImagesUpdateInput } from '/@/api/lims/exam/datacontract/examimages-datacontract'
 import { useUserInfo } from '/@/stores/userInfo'
 import type { TabPaneName, UploadFile, UploadFiles, UploadInstance, UploadProps } from 'element-plus'
@@ -66,11 +66,16 @@ import modal from '/@/globalProperties/modal'
 import { ExamImagesApi } from '/@/api/lims/exam/examimages'
 import { DictGetListDto } from '/@/api/admin/data-contracts'
 import { DictApi } from '/@/api/admin/Dict'
-import { useWebSocket } from '/@/composables/useWebSocket'
-import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
+// import { useWebSocket } from '/@/composables/useWebSocket'
+// import { MessageResult, MessageType, type MessageData } from '/@/utils/websocket'
 import { ExamInfoOutput } from '/@/api/lims/shared/datacontract/examinfo-datacontract'
 
-const { isConnected, sendMessage, onMessage } = useWebSocket()
+// const { isConnected, sendMessage, onMessage } = useWebSocket()
+import { useFormium } from '/@/utils/useFormium'
+import { sm4 } from 'sm-crypto-v2'
+const { sendRequestAsync } = useFormium()
+
+const { proxy } = getCurrentInstance() as any
 
 const props = withDefaults(
   defineProps<{
@@ -106,7 +111,31 @@ onMounted(async () => {
     state.antiBodyList = res.data!.zoom
     state.zoomList = res.data!.antiBody
   })
+
+  const formium = proxy.$formium
+  if (formium) {
+    formium.removeMessageHandler('ImageMessageHandler' + props.resultType.toString())
+    nextTick(() => {
+      formium.addMessageHandler('ImageMessageHandler' + props.resultType.toString(), (msg: string) => {
+        console.log(msg)
+        console.log('props.resultType', props.resultType)
+        let ret = JSON.parse(msg)
+        if (ret?.success) {
+          if (ret.component == props.resultType) refreshImageList()
+        } else {
+          modal.msgError('操作失败！' + ret?.msg)
+        }
+      })
+    })
+  }
 })
+onBeforeUnmount(() => {
+  const formium = proxy.$formium
+  if (formium != null && formium != undefined) {
+    formium.removeMessageHandler('ImageMessageHandler')
+  }
+})
+
 const previewList = computed(() => state.list.map((item) => item.fileUrl ?? ''))
 
 const setEditable = (editable: boolean) => {
@@ -163,7 +192,7 @@ const refreshData = (examInfo: ExamInfoOutput) => {
   state.examInfoId = examInfo?.id ?? -1
 
   refreshImageList()
-  send(MessageType.changeExam)
+  send('ChangeExam')
 }
 
 const refreshImageList = () => {
@@ -193,40 +222,67 @@ const updateImage = (row: ExamImagesOutput) => {
     row.originalIsShow = row.isShow
   })
 }
-const send = (msgType: MessageType) => {
-  let param = {
-    component: props.resultType.toString(),
-    type: msgType,
-    data: {
-      examInfoId: state.examInfoId,
-      sampleNo: state.examInfo?.sampleNo ?? '',
-      isGrossExamination: props.isGrossExamination ?? false,
-      accessToken: state.token,
-    },
-  } as MessageData
+// const send = (msgType: MessageType) => {
+//   let param = {
+//     component: props.resultType.toString(),
+//     type: msgType,
+//     data: {
+//       examInfoId: state.examInfoId,
+//       sampleNo: state.examInfo?.sampleNo ?? '',
+//       isGrossExamination: props.isGrossExamination ?? false,
+//       accessToken: state.token,
+//     },
+//   } as MessageData
 
-  return sendMessage(param)
+//   return sendMessage(param)
+// }
+
+const send = (msgType: string) => {
+  let param = {
+    examInfoId: state.examInfoId,
+    sampleNo: state.examInfo?.sampleNo ?? '',
+    isGrossExamination: props.isGrossExamination ?? false,
+    accessToken: state.token,
+    component: props.resultType.toString(),
+  }
+  console.log(param)
+  // return
+  sendRequestAsync(msgType, param)
+    .then((res: any) => {
+      console.log(res)
+      if (res.success) {
+        modal.msgSuccess('打印成功！')
+      } else {
+        modal.msgError('打印失败！' + res.msg)
+      }
+    })
+    .catch((err: any) => {
+      modal.msgError('打印失败！' + err.message)
+    })
 }
 
 const snapShot = () => {
-  if (!send(MessageType.snapShot)) {
-    modal.msgError('拍图命令发送失败！')
-    return
-  }
+  console.log('snapShot', props.resultType)
+  console.log('snapShot2', props.resultType.toString())
+  send('SnapShot')
+  // if (!send(MessageType.snapShot)) {
+  //   modal.msgError('拍图命令发送失败！')
+  //   return
+  // }
 }
 // 订阅 WebSocket 消息
-onMessage(
-  (data: MessageResult) => {
-    console.log('PathologyImages收到消息:', data)
-    if (data.success) {
-      console.log(data.type === MessageType.snapShot)
-      if (data.type === MessageType.snapShot) refreshImageList()
-    } else {
-      modal.msgError(data.msg)
-    }
-  },
-  (data: any) => data?.component === props.resultType.toString()
-)
+// onMessage(
+//   (data: MessageResult) => {
+//     console.log('PathologyImages收到消息:', data)
+//     if (data.success) {
+//       console.log(data.type === MessageType.snapShot)
+//       if (data.type === MessageType.snapShot) refreshImageList()
+//     } else {
+//       modal.msgError(data.msg)
+//     }
+//   },
+//   (data: any) => data?.component === props.resultType.toString()
+// )
 defineExpose({
   setEditable,
   refreshData,

@@ -170,11 +170,12 @@ import DigitalSlicingDialog from '/@/views/pathology/components/digitalslicingdi
 const props = withDefaults(
   defineProps<{
     auditType?: PathologyAuditTypeEnum
-    resultType?: number
+    resultType?: number,
+    wfCode?: string,
   }>(),
   {
     auditType: PathologyAuditTypeEnum.FirstAudit,
-    resultType: 3,
+    //resultType: 3,
   }
 )
 
@@ -346,6 +347,7 @@ const clearResult = () => {
   imagesRef.value?.refreshData(null)
 }
 const setResult = (result: any) => {
+  console.log('setResult', result)
   state.formData.diagnosis = result?.diagnosis ?? ''
   state.formData.grossExamination = result?.grossExamination ?? ''
   state.formData.microscopicExamination = result?.microscopicExamination ?? ''
@@ -509,6 +511,7 @@ defineExpose({
   setEditable,
   getResult,
   saveResult,
+  setResult,
 })
 </script>
 
