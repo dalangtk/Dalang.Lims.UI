@@ -506,12 +506,16 @@ const onViewSlicing = (row: ExamPathologyDigitalSlicingOutput) => {
 
 const imagesRef = ref()
 
+const getSampleTypes = () => {
+  return state.samplingSpotList.map((item) => item.sampleTypeCode)
+}
 defineExpose({
   refreshData,
   setEditable,
   getResult,
   saveResult,
   setResult,
+  getSampleTypes
 })
 </script>
 

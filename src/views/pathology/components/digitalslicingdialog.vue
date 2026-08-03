@@ -36,7 +36,7 @@ const initViewer = (id) => {
 
   viewer = OpenSeadragon({
     element: osdContainer.value,
-    tileSources: `http://localhost:8000/storage/${id}.dzi`,
+    tileSources: `${import.meta.env.VITE_API_URL}/storage/${id}.dzi`,
     showNavigator: true,
     prefixUrl: '/seadragonimages/',
   })

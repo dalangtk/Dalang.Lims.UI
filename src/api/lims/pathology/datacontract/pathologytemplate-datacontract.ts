@@ -4,6 +4,8 @@
 export interface BasePathologyTemplateQueryListInput {
   templateCode?: string | null
   wfCode: string | null
+  templateType?: number | null
+  sampleTypeCodes?: string[] | null
 }
 /**
  * 新增诊断模板入参

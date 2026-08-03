@@ -209,7 +209,6 @@ onBeforeUnmount(() => {
   //   modal.msgError('请先引入 formium 库！')
   //   return
   // }
-
   // formium.removeMessageHandler('test')
 })
 
@@ -371,21 +370,29 @@ const printLabel = async (dataList: any) => {
     modal.msgError('请选择要打印的列表！')
     return
   }
+  const formium = proxy.$formium
+  console.log(formium)
+  if (!formium) {
+    return
+  }
+
   let param = {
     printList: selectList,
     templateName: 'Handover',
   }
-  sendRequestAsync('PrintLabel', param).then((res: any) => {
-    console.log(res)
-    if (res.success) {
-      modal.msgSuccess('打印成功！')
-    } else {
-      modal.msgError('打印失败！' + res.msg)
-    }
-  }).catch((err: any) => {
-    modal.msgError('打印失败！' + err.message)
-  })
-  
+  sendRequestAsync('PrintLabel', param)
+    .then((res: any) => {
+      console.log(res)
+      if (res.success) {
+        modal.msgSuccess('打印成功！')
+      } else {
+        modal.msgError('打印失败！' + res.msg)
+      }
+    })
+    .catch((err: any) => {
+      modal.msgError('打印失败！' + err.message)
+    })
+
   // if (!isConnected.value) {
   //   modal.msgError('未连接到打印服务，请先检查打印服务！')
   //   return

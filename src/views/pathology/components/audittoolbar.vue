@@ -1,7 +1,7 @@
 <template>
   <div class="audit-toolbar">
-    <el-button type="primary" @click="selectTemplate">诊断模板</el-button>
-    <el-button type="primary" @click="handlePreview">预览</el-button>
+    <el-button type="primary" @click="queryTemplate" v-if="props.showTemplate">诊断模板</el-button>
+    <el-button type="primary" @click="handlePreview" v-if="props.showPreview">预览</el-button>
     <el-button type="primary" @click="handleSave">保存</el-button>
     <el-dropdown split-button type="primary" v-if="props.showMutilAudit" @click="handleAudit">
       审核
@@ -11,8 +11,8 @@
         </el-dropdown-menu>
       </template>
     </el-dropdown>
-    <el-button v-else-if="!props.showMutilAudit" type="primary" @click="handleAudit">审核</el-button>
-    <el-button type="primary" @click="handleUnAudit">反审核</el-button>
+    <el-button v-if="props.showAudit" type="primary" @click="handleAudit">审核</el-button>
+    <el-button type="primary" @click="handleUnAudit" v-if="props.showUnAudit">反审核</el-button>
   </div>
 
   <el-dialog v-model="state.selectTemplateDialogShow" destroy-on-close title="选择诊断模板">
@@ -40,9 +40,18 @@ const props = withDefaults(
   defineProps<{
     showMutilAudit?: boolean
     wfCode: string
+    getTemplateList: Function
+    showTemplate: boolean
+    showPreview: boolean
+    showAudit: boolean
+    showUnAudit: boolean
   }>(),
   {
     showMutilAudit: false,
+    showTemplate: true,
+    showPreview: true,
+    showAudit: true,
+    showUnAudit: true,
   }
 )
 
@@ -64,11 +73,18 @@ const mySelectTableRef = ref()
 const handleSave = () => {
   emit('save')
 }
-const selectTemplate = () => {
-  new BasePathologyTemplateApi().getListByWfCode({ wfCode: props.wfCode }).then((res) => {
-    state.selectTemplateList = res.data || []
-    state.selectTemplateDialogShow = true
-  })
+const queryTemplate = async () => {
+  if (props.getTemplateList) {
+    await props
+      .getTemplateList()
+      .then((result: BasePathologyTemplateOutput[]) => {
+        state.selectTemplateList = result || []
+        state.selectTemplateDialogShow = true
+      })
+      .catch(() => {
+        modal.alertError('获取诊断模板失败')
+      })
+  }
 }
 
 const confirmSelectTemplate = () => {

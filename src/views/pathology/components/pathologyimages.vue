@@ -238,6 +238,11 @@ const updateImage = (row: ExamImagesOutput) => {
 // }
 
 const send = (msgType: string) => {
+  const formium = proxy.$formium
+  console.log(formium)
+  if (!formium) {
+    return
+  }
   let param = {
     examInfoId: state.examInfoId,
     sampleNo: state.examInfo?.sampleNo ?? '',
@@ -251,13 +256,13 @@ const send = (msgType: string) => {
     .then((res: any) => {
       console.log(res)
       if (res.success) {
-        modal.msgSuccess('打印成功！')
+        modal.msgSuccess('操作成功！')
       } else {
-        modal.msgError('打印失败！' + res.msg)
+        modal.msgError('操作失败！' + res.msg)
       }
     })
     .catch((err: any) => {
-      modal.msgError('打印失败！' + err.message)
+      modal.msgError('操作失败！' + err.message)
     })
 }
 

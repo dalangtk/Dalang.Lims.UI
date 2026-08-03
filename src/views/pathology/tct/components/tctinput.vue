@@ -291,13 +291,16 @@ const defaultToAdd = () => {
   }
   state.formData = val
 }
-
+const getSampleTypes = () => {
+  return []
+}
 defineExpose({
   getResult,
   setResult,
   setEditable,
   refreshData,
   saveResult,
+  getSampleTypes
 })
 </script>
 

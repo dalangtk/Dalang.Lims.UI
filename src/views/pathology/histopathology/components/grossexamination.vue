@@ -18,7 +18,7 @@
                   size="small"
                   filterable
                   clearable
-                  :disabled="!state.editable"
+                  :disabled="disabled"
                   remote
                   :remote-method="querySamplingSpotOptions"
                   style="width: 100%"
@@ -66,7 +66,7 @@
         <el-input
           class="gross-input"
           type="textarea"
-          :disabled="!state.editable"
+          :disabled="disabled"
           v-model="state.formData.grossExamination"
           ref="grossInputRef"
           @keydown.right.prevent="handleRightKey"
@@ -81,7 +81,7 @@
           <el-tab-pane label="蜡块" name="candle">
             <MyTable :data="state.candleList" size="small" class="my-table" :show-paging="false" :show-toolbox="false">
               <template #headerButton>
-                <el-button type="primary" :disabled="!state.editable" size="small" @click="addCandle">
+                <el-button type="primary" :disabled="disabled" size="small" @click="addCandle">
                   <SvgIcon name="ele-Plus" />
                   新增</el-button
                 >
@@ -130,7 +130,7 @@
 </template>
 
 <script lang="ts" setup>
-import { nextTick, onMounted, reactive, ref } from 'vue'
+import { nextTick, onMounted, reactive, ref, computed } from 'vue'
 import { LabelValueOutput } from '/@/api/admin/data-contracts'
 import {
   ExamPathologySamplingSpotOutput,
@@ -180,6 +180,10 @@ const state = reactive({
   currSpecialResultList: [] as ExamSpecialResultListOutput[],
   currExamInfo: {} as ExamInfoOutput | null,
   candleList: [] as ExamPathologyCandleOutput[],
+})
+
+const disabled = computed(() => {
+  return !state.editable
 })
 
 const onAddSamplingSpotDetail = () => {
@@ -464,6 +468,9 @@ const deleteCandle = (row: ExamPathologyCandleOutput) => {
     })
     .catch(() => {})
 }
+const getSampleTypes = () => {
+  return state.samplingSpotList.map((item) => item.sampleTypeCode)
+}
 
 // #region 【】标记导航
 const grossInputRef = ref()
@@ -563,6 +570,7 @@ defineExpose({
   getResult,
   saveResult,
   setResult,
+  getSampleTypes,
 })
 </script>
 

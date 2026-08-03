@@ -1,404 +1,299 @@
 <template>
-  <div class="my-layout">
-    <div class="mt8" style="position: relative">
-      <el-card shadow="never" :body-style="{ paddingBottom: '0' }">
-        <el-form :inline="true" @submit.stop.prevent>
-          <el-form-item label="任务分组">
-            <el-select v-model="state.filter.groupName" :empty-values="[null, undefined]" style="width: 120px" @change="onQuery">
-              <el-option v-for="group in state.groupList" :key="group.name" :label="group.name" :value="group.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="任务名称">
-            <el-input v-model="state.filter.taskName" placeholder="任务名称" @keyup.enter="onQuery" />
-          </el-form-item>
-          <el-form-item label="任务状态">
-            <el-select v-model="state.filter.taskStatus" :empty-values="[null]" style="width: 120px" @change="onQuery">
-              <el-option v-for="status in state.statusList" :key="status.name" :label="status.name" :value="status.value" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="创建日期">
-            <MyDateRange v-model:startDate="state.filter.startAddTime" v-model:endDate="state.filter.endAddTime" style="width: 230px" />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" icon="ele-Search" @click="onQuery"> 查询 </el-button>
-            <el-button v-auth="'api:admin:task:add'" type="primary" icon="ele-Plus" @click="onAdd"> 新增 </el-button>
-          </el-form-item>
-        </el-form>
-        <div
-          v-show="rowSelectCount > 0"
-          class="my-flex my-flex-items-center pl10"
-          style="position: absolute; top: 0; bottom: 0; left: 0; right: 0; background-color: #fff"
-        >
-          <el-text class="mx-1"
-            >已选中 <el-text class="mx-1" type="primary">{{ rowSelectCount }}</el-text> 项</el-text
+  <div class="task-page">
+    <div class="task-container">
+      <el-card v-show="state.cur == 1" class="table-card">
+        <el-card class="mt8 search-card" shadow="never" :body-style="{ paddingBottom: '0' }">
+          <el-form :inline="true" @submit.stop.prevent>
+            <el-form-item label="任务名">
+              <el-input v-model="state.taskOrGroupName" placeholder="任务名/分组名" @keyup.enter="onLoadJobs" />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" icon="ele-Search" @click="onLoadJobs"> 查询 </el-button>
+              <el-button type="primary" icon="ele-Plus" @click="addJob"> 新增 </el-button>
+            </el-form-item>
+          </el-form>
+        </el-card>
+        <div class="table-wrapper">
+          <MyTable
+            ref="tb"
+            :data="state.treeData"
+            border
+            stripe
+            class="my-table"
+            row-key="id"
+            default-expand-all
+            :show-toolbox="false"
+            :total="0"
+            :show-pagination="false"
+            highlight-current-row
+            :default-sort="{ prop: 'groupName', order: 'ascending' }"
+            :header-cell-style="{ backgroundColor: '#F5F7FA', color: '#000000' }"
+            @current-change="handleSelect"
           >
-          <el-divider direction="vertical" />
-          <el-button v-auth="'api:admin:task:run'" icon="ele-Promotion" size="small" text type="primary" @click="onBatchRun">执行</el-button>
-          <el-divider direction="vertical" />
-          <el-button v-auth="'api:admin:task:pause'" icon="ele-CaretRight" size="small" text type="primary" @click="onBatchStart">启动</el-button>
-          <el-divider direction="vertical" />
-          <el-button v-auth="'api:admin:task:resume'" icon="ele-VideoPause" size="small" text type="primary" @click="onBatchPause">停止</el-button>
-          <el-divider direction="vertical" />
-          <el-button v-auth="'api:admin:task:delete'" icon="ele-Delete" size="small" text type="danger" @click="onBatchDelete">删除</el-button>
-
-          <el-button size="large" link @click="onClear" style="position: absolute; right: 6px; top: 6px">
-            <svgIcon name="ele-Close" size="18"></svgIcon>
-          </el-button>
+            <el-table-column prop="" type="index" width="60" label="序号" align="center"> </el-table-column>
+            <el-table-column prop="groupName" label="分组" width="120" align="center"> </el-table-column>
+            <el-table-column prop="taskName" label="任务" width="120" align="center"> </el-table-column>
+            <el-table-column prop="taskType" label="任务类型" width="90" align="center">
+              <template v-slot="scope">
+                <span v-if="scope.row.taskType == 1"> Api </span>
+                <span v-if="scope.row.taskType == 2"> Dll </span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="interval" label="间隔时间" width="100" align="center"> </el-table-column>
+            <el-table-column prop="apiUrl" label="ApiUrl" align="center"> </el-table-column>
+            <el-table-column prop="stateDisplay" width="100" label="运行状态" align="center">
+              <template v-slot="{ row }">
+                <template v-if="row.stateDisplay === '暂停'">
+                  <el-tag type="warning">{{ row.stateDisplay }}</el-tag>
+                </template>
+                <template v-else-if="row.stateDisplay === '正常'">
+                  <el-tag type="success">{{ row.stateDisplay }}</el-tag>
+                </template>
+                <template v-else-if="row.stateDisplay === '阻塞'">
+                  <el-tag type="success">{{ row.stateDisplay }}</el-tag>
+                </template>
+              </template>
+            </el-table-column>
+            <el-table-column prop="lastRunTime" label="上次运行时间" align="center">
+              <template v-slot="scope">
+                {{ scope.row.lastRunTime ? formatDatetime(scope.row.lastRunTime) : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="nextRunTime" label="下次运行时间" align="center">
+              <template v-slot="scope">
+                {{ scope.row.nextRunTime ? formatDatetime(scope.row.nextRunTime) : '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="describe" label="任务描述" :show-overflow-tooltip="true" align="center"> </el-table-column>
+            <el-table-column label="操作" align="center" width="220" fixed="right">
+              <template #default="{ row }">
+                <el-button-group>
+                  <el-button
+                    v-if="row.isGroup == false && (row.status == 4 || row.status == 5)"
+                    icon="ele-VideoPlay"
+                    size="small"
+                    type="danger"
+                    @click="onStart(row)"
+                    >开启</el-button
+                  >
+                  <el-button v-if="row.isGroup == false && row.status == 6" icon="ele-VideoPause" size="small" @click="onPause(row)" type="danger"
+                    >暂停</el-button
+                  >
+                  <el-button v-if="row.isGroup == false" icon="ele-Delete" size="small" type="info">删除</el-button>
+                  <el-dropdown v-if="row.isGroup == false">
+                    <el-button size="small"> 更多<i class="el-icon-arrow-down el-icon--right"></i> </el-button>
+                    <template #dropdown>
+                      <el-dropdown-menu>
+                        <el-dropdown-item @click="editJob(row)">编辑</el-dropdown-item>
+                        <el-dropdown-item @click="onExecute(row)">执行</el-dropdown-item>
+                        <el-dropdown-item @click="onOpenLog(row.id)">日志</el-dropdown-item>
+                        <!-- <el-dropdown-item>清除日志</el-dropdown-item> -->
+                      </el-dropdown-menu>
+                    </template>
+                  </el-dropdown>
+                </el-button-group>
+              </template>
+            </el-table-column>
+          </MyTable>
         </div>
       </el-card>
     </div>
-
-    <el-card class="my-fill mt8 el-card-table" shadow="never">
-      <el-table ref="tableRef" v-loading="state.loading" :data="state.taskListData" row-key="id" style="width: 100%">
-        <el-table-column type="selection" width="40" />
-        <el-table-column type="index" label="序号" width="60" :index="indexMethod" />
-        <el-table-column prop="topic" label="任务名称" min-width="260">
-          <template #default="{ row }">
-            <div>{{ row.id }}</div>
-            <div>{{ row.topic }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="任务状态" width="90">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 0 || row.status === 'Running'" disable-transitions>运行中</el-tag>
-            <el-tag v-if="row.status === 1 || row.status === 'Paused'" type="info" disable-transitions>停止</el-tag>
-            <el-tag v-if="row.status === 2 || row.status === 'Completed'" type="success" disable-transitions>完成</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="round" label="运行次数" width="90" />
-        <el-table-column prop="currentRound" label="当前次数" width="90" />
-        <el-table-column prop="errorTimes" label="失败次数" width="90">
-          <template #default="{ row }">
-            <el-text class="mx-1" type="danger">{{ row.errorTimes }}</el-text>
-          </template>
-        </el-table-column>
-        <el-table-column prop="body" label="任务数据" min-width="260" />
-        <el-table-column prop="intervalArgument" label="定时参数" min-width="120">
-          <template #default="{ row }">
-            <div>{{ formatterInterval(row.interval) }}</div>
-            <div>{{ row.intervalArgument }}</div>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" :formatter="formatterTime" width="100" />
-        <el-table-column prop="lastRunTime" label="最后运行时间" :formatter="formatterTime" width="120" />
-        <el-table-column label="操作" width="180" fixed="right" header-align="center" align="center">
-          <template #default="{ row }">
-            <div class="my-flex">
-              <el-button v-auth="'api:admin:task-log:get-page'" icon="ele-Tickets" size="small" text type="primary" @click="onShowLogs(row)"
-                >日志</el-button
-              >
-              <el-button v-auth="'api:admin:task:update'" icon="ele-Edit" size="small" text type="primary" @click="onUpdate(row)">修改</el-button>
-              <el-button v-auth="'api:admin:task:delete'" icon="ele-Delete" size="small" text type="danger" @click="onDelete(row)">删除</el-button>
-            </div>
-
-            <div class="my-flex">
-              <el-button v-auth="'api:admin:task:run'" icon="ele-Promotion" size="small" text type="primary" @click="onRun(row)">执行</el-button>
-              <el-button v-auth="'api:admin:task:update'" icon="ele-CopyDocument" size="small" text type="primary" @click="onCopy(row)"
-                >复制</el-button
-              >
-              <el-button
-                v-if="row.status === 1 || row.status === 'Paused'"
-                v-auth="'api:admin:task:pause'"
-                icon="ele-CaretRight"
-                size="small"
-                text
-                type="primary"
-                @click="onStart(row)"
-                >启动</el-button
-              >
-              <el-button
-                v-if="row.status === 0 || row.status === 'Running'"
-                v-auth="'api:admin:task:resume'"
-                icon="ele-VideoPause"
-                size="small"
-                text
-                type="primary"
-                @click="onPause(row)"
-                >停止</el-button
-              >
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="my-flex my-flex-end" style="margin-top: 20px">
-        <el-pagination
-          v-model:currentPage="state.pageInput.currentPage"
-          v-model:page-size="state.pageInput.pageSize"
-          :total="state.total"
-          :page-sizes="[10, 20, 50, 100]"
-          small
-          background
-          @size-change="onSizeChange"
-          @current-change="onCurrentChange"
-          layout="total, sizes, prev, pager, next, jumper"
-        />
-      </div>
-    </el-card>
-
-    <task-logs ref="taskLogsRef" :title="state.taskLogsTitle"></task-logs>
-    <task-form ref="taskFormRef" :title="state.taskFormTitle"></task-form>
+    <TaskForm ref="taskFormRef"></TaskForm>
+    <TaskLog ref="taskLogRef"></TaskLog>
   </div>
 </template>
 
-<script lang="ts" setup name="admin/task">
-import { ref, reactive, onMounted, onBeforeMount, getCurrentInstance, defineAsyncComponent, computed } from 'vue'
-import { ElTable, ElMessage } from 'element-plus'
-import { TaskListOutput, PageInputTaskGetPageInput, TaskStatus } from '/@/api/admin/data-contracts'
-import { TaskApi } from '/@/api/admin/Task'
-import dayjs from 'dayjs'
-import eventBus from '/@/utils/mitt'
-import { cloneDeep } from 'lodash-es'
+<script lang="ts" setup>
+import { onMounted, reactive, ref } from 'vue'
+import TaskForm from './components/task-form.vue'
+import TaskLog from './components/task-log.vue'
+import { QuartzTaskApi } from '/@/api/admin/QuartzTask'
+import { QuartzTaskListOutput } from '/@/api/admin/data-contracts'
+import MyTable from '/@/components/my-table/index.vue'
+import modal from '/@/globalProperties/modal'
+import { formatDatetime } from '/@/utils/formatTime'
 
-// 引入组件
-const TaskLogs = defineAsyncComponent(() => import('./components/task-logs.vue'))
-const TaskForm = defineAsyncComponent(() => import('./components/task-form.vue'))
-const MyDateRange = defineAsyncComponent(() => import('/@/components/my-date-range/index.vue'))
-
-const { proxy } = getCurrentInstance() as any
-
-const taskLogsRef = ref()
 const taskFormRef = ref()
-const tableRef = ref<InstanceType<typeof ElTable>>()
+const taskLogRef = ref()
 
 const state = reactive({
-  loading: false,
-  taskFormTitle: '',
-  filter: {
-    taskName: '',
-    groupName: '',
-    taskStatus: undefined as TaskStatus | undefined,
-    startAddTime: undefined,
-    endAddTime: undefined,
-  },
+  cur: 1,
+  activeIndex: '1',
+  tableData: [] as QuartzTaskListOutput[],
+  treeData: [] as any[],
+  dialogFormVisible: false,
+  dialogRecordVisible: false,
+  taskOrGroupName: null,
+  currentPage: 1,
   total: 0,
-  pageInput: {
-    currentPage: 1,
-    pageSize: 20,
-  } as PageInputTaskGetPageInput,
-  taskListData: [] as Array<TaskListOutput>,
-  taskLogsTitle: '',
-  groupList: [{ name: '全部', value: '' }],
-  statusList: [
-    { name: '全部', value: undefined },
-    { name: '运行中', value: 0 },
-    { name: '停止', value: 1 },
-    { name: '已完成', value: 2 },
-  ],
+  pageSize: 20,
+  pageSizes: [20, 30, 40, 50],
+  recordData: [],
+  dashboardData: { JobCounts: 0, ErrorCounts: 0, AverageTime: 0, RunJobs: '' },
+  execTrend: null,
+  failureRate: null,
 })
 
 onMounted(() => {
-  onQuery()
-  eventBus.off('refreshTask')
-  eventBus.on('refreshTask', async () => {
-    onQuery()
-  })
+  onLoadJobs()
+  onLoadClassJobs()
 })
 
-onBeforeMount(() => {
-  eventBus.off('refreshTask')
-})
-
-const rowSelectCount = computed(() => {
-  return tableRef.value?.getSelectionRows().length
-})
-
-const taskIds = computed(() => {
-  return tableRef.value?.getSelectionRows().map((a: any) => a.id)
-})
-
-const indexMethod = (index: number) => {
-  if (state.pageInput.currentPage && state.pageInput.pageSize) return index + 1 + (state.pageInput.currentPage - 1) * state.pageInput.pageSize
-  else return index
-}
-
-const formatterInterval = (cellValue: any) => {
-  let label = ''
-  switch (cellValue) {
-    case 1:
-    case 'SEC':
-      label = '按秒触发'
-      break
-    case 11:
-    case 'RunOnDay':
-      label = '每天'
-      break
-    case 12:
-    case 'RunOnWeek':
-      label = '每周几'
-      break
-    case 13:
-    case 'RunOnMonth':
-      label = '每月第几日'
-      break
-    case 21:
-    case 'Custom':
-      label = 'Cron表达式'
-      break
+const onLoadJobs = () => {
+  const params = {
+    taskOrGroupName: state.taskOrGroupName,
   }
-  return label
-}
-
-const formatterTime = (row: any, column: any, cellValue: any) => {
-  return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
-}
-
-const onClear = () => {
-  tableRef.value?.clearSelection()
-}
-
-const onQuery = async () => {
-  state.loading = true
-  state.pageInput.filter = state.filter
-  const res = await new TaskApi().getPage(state.pageInput).catch(() => {
-    state.loading = false
+  new QuartzTaskApi().getList(params).then((res) => {
+    if (res?.success) {
+      console.log(res.data)
+      // state.tableData = res.data || []
+      state.treeData = convertToTreeData(res.data || [])
+    }
   })
-
-  state.taskListData = res?.data?.list ?? []
-  state.total = res?.data?.total ?? 0
-  state.loading = false
 }
-
-const onAdd = () => {
-  state.taskFormTitle = '新增任务'
-  taskFormRef.value.open()
+const onStart = (row: QuartzTaskListOutput) => {
+  new QuartzTaskApi().start(row).then((res) => {
+    if (res?.success) {
+      modal.msgSuccess('任务已启动')
+      onLoadJobs()
+    }
+  })
 }
-
-const onUpdate = (row: TaskListOutput) => {
-  state.taskFormTitle = '修改任务'
+const onLoadClassJobs = () => {
+  
+}
+const editJob = (row: QuartzTaskListOutput) => {
   taskFormRef.value.open(row)
 }
-
-const onCopy = (row: TaskListOutput) => {
-  state.taskFormTitle = '新增任务'
-  var task = cloneDeep(row)
-  task.id = null
-  taskFormRef.value.open(task)
+const onTabClick = (curvalue: any) => {
+  state.activeIndex = curvalue
 }
-
-// 查看日志
-const onShowLogs = (row: TaskListOutput) => {
-  state.taskLogsTitle = `${row.topic}${row.id}运行日志`
-  taskLogsRef.value.open(row)
+const handleSelect = () => {}
+const addJob = () => {
+  taskFormRef.value.open()
 }
+const convertToTreeData = (data: QuartzTaskListOutput[]) => {
+  // 按 groupName 分组
+  const groupMap = new Map()
 
-const onRun = (row: TaskListOutput) => {
-  proxy.$modal
-    .confirm(`确定要运行【${row.topic}】任务?`)
-    .then(async () => {
-      await new TaskApi().run({ id: row.id as string }, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
+  data.forEach((item) => {
+    const groupName = item.groupName || '未分组'
+    if (!groupMap.has(groupName)) {
+      groupMap.set(groupName, [])
+    }
+    groupMap.get(groupName).push(item)
+  })
+
+  // 构建树形结构
+  const treeData: any[] = []
+  groupMap.forEach((children, groupName) => {
+    // 创建父节点
+    const parentNode = {
+      id: `group-${groupName}`, // 为父节点生成唯一ID
+      // taskName: groupName,
+      groupName: groupName,
+      isGroup: true, // 标记为分组节点
+      children: children.map((item: any) => ({
+        ...item,
+        isGroup: false, // 标记为子节点
+      })),
+    }
+    treeData.push(parentNode)
+  })
+
+  return treeData
 }
-
-const onPause = (row: TaskListOutput) => {
-  proxy.$modal
-    .confirm(`确定要停止【${row.topic}】任务?`)
-    .then(async () => {
-      await new TaskApi().pause({ id: row.id as string }, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
+const onPause = (row: QuartzTaskListOutput) => {
+  new QuartzTaskApi().pause(row).then((res) => {
+    if (res?.success) {
+      modal.msgSuccess('任务已暂停')
+      onLoadJobs()
+    }
+  })
 }
-
-const onStart = (row: TaskListOutput) => {
-  proxy.$modal
-    .confirm(`确定要启动【${row.topic}】任务?`)
-    .then(async () => {
-      await new TaskApi().resume({ id: row.id as string }, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
+const onExecute = (row: QuartzTaskListOutput) => {
+  new QuartzTaskApi().run(row).then((res) => {
+    if (res?.success) {
+      modal.msgSuccess('任务已执行')
+      onLoadJobs()
+    }
+  })
 }
-
-const onDelete = (row: TaskListOutput) => {
-  proxy.$modal
-    .confirmDelete(`确定要删除【${row.topic}】任务?`)
-    .then(async () => {
-      await new TaskApi().delete({ id: row.id as string }, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
-}
-
-const checkRowSelect = () => {
-  if (rowSelectCount.value > 0) {
-    return true
-  } else {
-    ElMessage({
-      message: '请选择任务再操作',
-      type: 'warning',
-    })
-    return false
-  }
-}
-
-const onBatchRun = () => {
-  if (!checkRowSelect()) {
-    return
-  }
-
-  proxy.$modal
-    .confirm(`确定要运行 ${rowSelectCount.value} 项任务?`)
-    .then(async () => {
-      await new TaskApi().batchRun(taskIds.value, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
-}
-
-const onBatchPause = () => {
-  if (!checkRowSelect()) {
-    return
-  }
-
-  proxy.$modal
-    .confirm(`确定要停止 ${rowSelectCount.value} 项任务?`)
-    .then(async () => {
-      await new TaskApi().batchPause(taskIds.value, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
-}
-
-const onBatchStart = () => {
-  if (!checkRowSelect()) {
-    return
-  }
-
-  proxy.$modal
-    .confirm(`确定要启动 ${rowSelectCount.value} 项任务?`)
-    .then(async () => {
-      await new TaskApi().batchResume(taskIds.value, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
-}
-
-const onBatchDelete = () => {
-  if (!checkRowSelect()) {
-    return
-  }
-
-  proxy.$modal
-    .confirm(`确定要删除 ${rowSelectCount.value} 项任务?`)
-    .then(async () => {
-      await new TaskApi().batchDelete(taskIds.value, { loading: true, showSuccessMessage: true })
-      onQuery()
-    })
-    .catch(() => {})
-}
-
-const onSizeChange = (val: number) => {
-  state.pageInput.currentPage = 1
-  state.pageInput.pageSize = val
-  onQuery()
-}
-
-const onCurrentChange = (val: number) => {
-  state.pageInput.currentPage = val
-  onQuery()
+const onOpenLog = (id: number) => {
+  console.log(id)
+  taskLogRef.value.open(id)
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.task-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-container {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  height: 100%;
+}
+
+.table-card {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+
+  :deep(.el-card__body) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 10px;
+  }
+}
+
+.search-card {
+  flex-shrink: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  min-height: 0;
+  margin-top: 10px;
+}
+
+.card {
+  flex: 1;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  text-align: center;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 28px;
+  color: #333;
+}
+
+.card p {
+  margin: 5px 0 0;
+  color: #666;
+  font-size: 14px;
+}
+.chart {
+  height: 350px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+}
+.my-table {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+</style>

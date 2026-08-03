@@ -3,12 +3,17 @@
     <!-- 顶部 Header -->
     <header class="lis-header">
       <AuditToolBar
-        :show-mutil-audit="true"
         :wf-code="props.wfCode"
         @save="handleSave"
+        :show-preview="props.resultType != 3"
+        :show-template="props.resultType != 3"
+        :show-audit="props.resultType != 3 && props.wfCode != 'tct'"
+        :show-mutil-audit="props.resultType != 3 && props.wfCode == 'tct'"
+        :show-un-audit="props.resultType != 3"
         @audit="handleAudit(props.resultType === 1 ? OperationTypeEnum.FirstCheck : OperationTypeEnum.SecondCheck, [])"
         @unAudit="handleUnAudit"
         @selectTemplate="handleSelectTemplate"
+        :getTemplateList="getTemplateList"
       ></AuditToolBar>
       <el-tag effect="dark" type="success">显示: {{ state.filteredList.length }} / 总量: {{ state.totalCount }}</el-tag>
     </header>
@@ -133,8 +138,9 @@ import SampleList from '/@/views/lims/exam/sampletest/components/samplelist.vue'
 import tracktab from '/@/views/lims/exam/sampletest/components/tracktab.vue'
 import AuditToolBar from '/@/views/pathology/components/audittoolbar.vue'
 import { PathologyTestApi } from '/@/api/lims/pathology/pathologytest'
-import { BasePathologyTemplateOutput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
+import { BasePathologyTemplateOutput, BasePathologyTemplateQueryListInput } from '/@/api/lims/pathology/datacontract/pathologytemplate-datacontract'
 import { ExamSpecialResultListOutput, ExamSpecialResultOutput } from '/@/api/lims/shared/datacontract/examspecialresult-datacontract'
+import { BasePathologyTemplateApi } from '/@/api/lims/pathology/pathologytemplate'
 
 const props = defineProps({
   firstCheckComponent: {
@@ -390,7 +396,7 @@ const getSpecialResultList = (examId: number) => {
         acc[item.fieldCode!] = item.fieldValue
         return acc
       }, {})
-      console.log('getSpecialResultList',pathologyInputRef.value)
+      console.log('getSpecialResultList', pathologyInputRef.value)
       pathologyInputRef.value.setResult(result)
     }
   })
@@ -627,6 +633,23 @@ const moreTabVisableChange = (tabName: string) => {
 //#region 基础信息编辑
 // 基础信息编辑逻辑已移至 PatientInfo 组件
 //#endregion 基础信息编辑
+
+const getTemplateList = async () => {
+  let param = {
+    wfCode: props.wfCode,
+    templateType: props.resultType,
+  } as BasePathologyTemplateQueryListInput
+  if (param.templateType == 3) {
+    param.templateType = 2
+  } else if (param.templateType == 1 || param.templateType == 2) {
+    param.templateType = 1
+  }
+  param.sampleTypeCodes = pathologyInputRef.value.getSampleTypes()
+
+  let ret = await new BasePathologyTemplateApi().getTemplateList(param)
+  if (!ret.success) throw new Error(ret.msg!)
+  return ret.data || []
+}
 
 defineExpose({
   refreshData,

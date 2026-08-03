@@ -1402,38 +1402,6 @@ export interface PageInputRoleGetPageDto {
 }
 
 /** 分页信息输入 */
-export interface PageInputTaskGetPageInput {
-  /**
-   * 当前页标
-   * @format int32
-   */
-  currentPage?: number
-  /**
-   * 每页大小
-   * @format int32
-   */
-  pageSize?: number
-  dynamicFilter?: DynamicFilterInfo
-  filter?: TaskGetPageInput
-}
-
-/** 分页信息输入 */
-export interface PageInputTaskLogGetPageDto {
-  /**
-   * 当前页标
-   * @format int32
-   */
-  currentPage?: number
-  /**
-   * 每页大小
-   * @format int32
-   */
-  pageSize?: number
-  dynamicFilter?: DynamicFilterInfo
-  filter?: TaskLogGetPageDto
-}
-
-/** 分页信息输入 */
 export interface PageInputTenantGetPageDto {
   /**
    * 当前页标
@@ -1575,28 +1543,6 @@ export interface PageOutputRoleGetPageOutput {
   total?: number
   /** 数据 */
   list?: RoleGetPageOutput[] | null
-}
-
-/** 分页信息输出 */
-export interface PageOutputTaskListOutput {
-  /**
-   * 数据总数
-   * @format int64
-   */
-  total?: number
-  /** 数据 */
-  list?: TaskListOutput[] | null
-}
-
-/** 分页信息输出 */
-export interface PageOutputTaskLog {
-  /**
-   * 数据总数
-   * @format int64
-   */
-  total?: number
-  /** 数据 */
-  list?: TaskLog[] | null
 }
 
 /** 分页信息输出 */
@@ -3210,30 +3156,6 @@ export interface ResultOutputPageOutputRoleGetPageOutput {
 }
 
 /** 结果输出 */
-export interface ResultOutputPageOutputTaskListOutput {
-  /** 是否成功标记 */
-  success?: boolean
-  /** 编码 */
-  code?: string | null
-  /** 消息 */
-  msg?: string | null
-  /** 分页信息输出 */
-  data?: PageOutputTaskListOutput
-}
-
-/** 结果输出 */
-export interface ResultOutputPageOutputTaskLog {
-  /** 是否成功标记 */
-  success?: boolean
-  /** 编码 */
-  code?: string | null
-  /** 消息 */
-  msg?: string | null
-  /** 分页信息输出 */
-  data?: PageOutputTaskLog
-}
-
-/** 结果输出 */
 export interface ResultOutputPageOutputTenantListOutput {
   /** 是否成功标记 */
   success?: boolean
@@ -3344,17 +3266,6 @@ export interface ResultOutputString {
   msg?: string | null
   /** 数据 */
   data?: string | null
-}
-
-/** 结果输出 */
-export interface ResultOutputTaskGetOutput {
-  /** 是否成功标记 */
-  success?: boolean
-  /** 编码 */
-  code?: string | null
-  /** 消息 */
-  msg?: string | null
-  data?: TaskGetOutput
 }
 
 /** 结果输出 */
@@ -3733,162 +3644,6 @@ export interface StaffAddInput {
   workWeChatCard?: string | null
   /** 个人简介 */
   introduce?: string | null
-}
-
-/** 添加 */
-export interface TaskAddInput {
-  /** 任务标题 */
-  topic?: string | null
-  /** 任务参数 */
-  body?: string | null
-  /**
-   * 任务执行多少轮，-1为永久循环
-   * @format int32
-   */
-  round?: number
-  /** SEC=1,RunOnDay=11,RunOnWeek=12,RunOnMonth=13,Custom=21 */
-  interval?: TaskInterval
-  /** 定时参数 60,60,60,120,120,1200,1200 */
-  intervalArgument?: string | null
-  /** 报警邮件，多个邮件地址则逗号分隔 */
-  alarmEmail?: string | null
-}
-
-export interface TaskGetOutput {
-  /** 任务标题 */
-  topic?: string | null
-  /** 任务参数 */
-  body?: string | null
-  /**
-   * 任务执行多少轮，-1为永久循环
-   * @format int32
-   */
-  round?: number
-  /** SEC=1,RunOnDay=11,RunOnWeek=12,RunOnMonth=13,Custom=21 */
-  interval?: TaskInterval
-  /** 定时参数 60,60,60,120,120,1200,1200 */
-  intervalArgument?: string | null
-  /** 报警邮件，多个邮件地址则逗号分隔 */
-  alarmEmail?: string | null
-  /**
-   * 任务Id
-   * @minLength 1
-   */
-  id: string
-}
-
-export interface TaskGetPageInput {
-  /** 分组名称 */
-  groupName?: string | null
-  /** 任务名称 */
-  taskName?: string | null
-  /** 集群Id */
-  clusterId?: string | null
-  /** Running=0,Paused=1,Completed=2 */
-  taskStatus?: TaskStatus
-  /**
-   * 创建开始时间
-   * @format date-time
-   */
-  startAddTime?: string | null
-  /**
-   * 创建结束时间
-   * @format date-time
-   */
-  endAddTime?: string | null
-}
-
-/**
- * SEC=1,RunOnDay=11,RunOnWeek=12,RunOnMonth=13,Custom=21
- * @format int32
- */
-export type TaskInterval = 1 | 11 | 12 | 13 | 21
-
-export interface TaskListOutput {
-  /** 主键 */
-  id?: string | null
-  /** 任务标题 */
-  topic?: string | null
-  /** 任务数据 */
-  body?: string | null
-  /**
-   * 任务执行多少轮
-   * @format int32
-   */
-  round?: number
-  /** SEC=1,RunOnDay=11,RunOnWeek=12,RunOnMonth=13,Custom=21 */
-  interval?: TaskInterval
-  /** 定时参数值 */
-  intervalArgument?: string | null
-  /** Running=0,Paused=1,Completed=2 */
-  status?: TaskStatus
-  /**
-   * 创建时间
-   * @format date-time
-   */
-  createTime?: string
-  /**
-   * 最后运行时间
-   * @format date-time
-   */
-  lastRunTime?: string
-  /**
-   * 当前运行到第几轮
-   * @format int32
-   */
-  currentRound?: number
-  /**
-   * 错次数
-   * @format int32
-   */
-  errorTimes?: number
-}
-
-export interface TaskLog {
-  taskId?: string | null
-  /** @format int32 */
-  round?: number
-  /** @format int64 */
-  elapsedMilliseconds?: number
-  success?: boolean
-  exception?: string | null
-  remark?: string | null
-  /** @format date-time */
-  createTime?: string
-}
-
-export interface TaskLogGetPageDto {
-  taskId?: string | null
-}
-
-/**
- * Running=0,Paused=1,Completed=2
- * @format int32
- */
-export type TaskStatus = 0 | 1 | 2
-
-/** 修改 */
-export interface TaskUpdateInput {
-  /** 任务标题 */
-  topic?: string | null
-  /** 任务参数 */
-  body?: string | null
-  /**
-   * 任务执行多少轮，-1为永久循环
-   * @format int32
-   */
-  round?: number
-  /** SEC=1,RunOnDay=11,RunOnWeek=12,RunOnMonth=13,Custom=21 */
-  interval?: TaskInterval
-  /** 定时参数 60,60,60,120,120,1200,1200 */
-  intervalArgument?: string | null
-  /** 报警邮件，多个邮件地址则逗号分隔 */
-  alarmEmail?: string | null
-  /**
-   * 任务Id
-   * @minLength 1
-   */
-  id: string
 }
 
 /** 添加 */
@@ -4909,4 +4664,99 @@ export interface UserGetOptionOutput {
   id: number
   userName: string | null
   name: string | null
+}
+
+/**
+ * 查询定时任务列表入参
+ */
+export interface QuartzTaskQueryListInput {
+  taskName?: string | null
+  groupName?: string | null
+  taskOrGroupName?: string | null
+}
+/**
+ * 新增定时任务入参
+ */
+export interface QuartzTaskAddInput {
+  taskName?: string | null
+  groupName?: string | null
+  triggerType?: number | null
+  interval?: string | null
+  describe?: string | null
+  lastRunTime?: Date | null
+  status?: number | null
+  taskType?: number | null
+  taskParameter?: string | null
+  apiUrl?: string | null
+  apiRequestType?: string | null
+  apiRequestBody?: string | null
+  apiRequestHeader?: string | null
+  apiParameter?: string | null
+  apiTimeOut?: number | null
+  dllName?: string | null
+  sort?: number
+  isValid?: boolean
+}
+/**
+ * 更新定时任务入参
+ */
+export interface QuartzTaskUpdateInput extends QuartzTaskAddInput {
+  id: number
+}
+/**
+ * 获取单个定时任务返回
+ */
+export interface QuartzTaskOutput extends QuartzTaskUpdateInput {
+  nextRunTime?: Date | null
+  stateDisplay?: string | null
+}
+
+/**
+ * 获取定时任务列表返回
+ */
+export interface QuartzTaskListOutput extends QuartzTaskOutput {
+  proId: number
+  proName?: string | null
+  proTime?: Date | null
+  modId: number
+  modName?: string | null
+  modTime?: Date | null
+}
+
+/**
+ * 查询任务日志列表入参
+ */
+export interface QuartzTaskLogQueryListInput {}
+/**
+ * 新增任务日志入参
+ */
+export interface QuartzTaskLogAddInput {
+  taskId?: number | null
+  beginDate?: Date | null
+  endDate?: Date | null
+  durationMs?: number | null
+  msg?: string | null
+  jobStatus?: number | null
+}
+/**
+ * 更新任务日志入参
+ */
+export interface QuartzTaskLogUpdateInput extends QuartzTaskLogAddInput {
+  id: number
+}
+/**
+ * 获取单个任务日志返回
+ */
+export interface QuartzTaskLogOutput extends QuartzTaskLogUpdateInput {}
+
+/**
+ * 获取任务日志列表返回
+ */
+export interface QuartzTaskLogListOutput extends QuartzTaskLogOutput {
+  proId: number
+  proName?: string | null
+  proTime?: Date | null
+  modId: number
+  modName?: string | null
+  modTime?: Date | null
 }

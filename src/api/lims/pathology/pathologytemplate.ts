@@ -60,23 +60,18 @@ export class BasePathologyTemplateApi<SecurityDataType = unknown> extends HttpCl
    * No description
    *
    * @tags pathology
-   * @name GetListByWfCode
-   * @summary 查询工作流下的诊断模板列表
-   * @request GET:/api/pathology/base-pathology-template/get-list-by-wf-code
+   * @name GetTemplateList
+   * @summary 查询诊断模板列表
+   * @request POST:/api/pathology/base-pathology-template/get-template-list
    * @secure
    */
-  getListByWfCode = (
-    query?: {
-      /** @format string */
-      wfCode?: string
-    },
-    params: RequestParams = {}
-  ) =>
-    this.request<ResultBaseOutput<Array<BasePathologyTemplateOutput>>, any>({
-      path: `/api/pathology/base-pathology-template/get-list-by-wf-code`,
-      method: 'GET',
-      query: query,
+  getTemplateList = (data: BasePathologyTemplateQueryListInput, params: RequestParams = {}) =>
+    this.request<ResultBaseOutput<BasePathologyTemplateListOutput[]>, any>({
+      path: `/api/pathology/base-pathology-template/get-template-list`,
+      method: 'POST',
+      body: data,
       secure: true,
+      type: ContentType.Json,
       format: 'json',
       ...params,
     })
