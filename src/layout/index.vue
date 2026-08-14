@@ -5,10 +5,11 @@
     :domain-name="state.domainName"
     :enable-streaming="true"
     :enable-context="true"
-    custom-icon-url="https://loveying.com.cn:9092/api/v1/download-shared-object/aHR0cHM6Ly8xMjcuMC4wLjE6OTAwMC9kbGltcy9saW1zLzIwMjYvMDIvMjcvNTZhNmM0MjQtNDNiYS00OGRhLWFlZmEtMDQzMzk3NTBiNmQzLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUg2SVlZRVc0TTlEOU1UV1VZTFFPJTJGMjAyNjA4MTElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwODExVDAyNTcwNFomWC1BbXotRXhwaXJlcz00MzIwMCZYLUFtei1TZWN1cml0eS1Ub2tlbj1leUpoYkdjaU9pSklVelV4TWlJc0luUjVjQ0k2SWtwWFZDSjkuZXlKaFkyTmxjM05MWlhraU9pSklOa2xaV1VWWE5FMDVSRGxOVkZkVldVeFJUeUlzSW1WNGNDSTZNVGM0TmpRMk1ERXhPQ3dpY0dGeVpXNTBJam9pWkd4cGJYTWlmUS5uQndFOVBKOHZPUjltckdmYkZoUHdxRzJJdlNBMkFUSUZ4X3NZczlvUlVacTFPYUdjZS01Qy1ZSEZwalhjM2xDa185NlVQV2V5c2FWWE9Ub3NDb0xKUSZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmdmVyc2lvbklkPW51bGwmWC1BbXotU2lnbmF0dXJlPTYyMzg1OTk0ZmUzODcyODQ0ZDRiMTE0MzQ2OTllODE4ODQxMDAyOTI2ODgzNjViYjZhNjFiMzQwZjExOTlmY2M"
+    custom-icon-url="https://loveying.com.cn:9002/dlims/lims/2026/02/27/56a6c424-43ba-48da-aefa-04339750b6d3.png"
     :enable-local-storage="true"
     :enable-voice-input="true"
     :callbacks="state.callbacks"
+    :enable-fullscreen-toggle="true"
   />
   <component :is="layouts[themeConfig.layout]" />
 </template>
